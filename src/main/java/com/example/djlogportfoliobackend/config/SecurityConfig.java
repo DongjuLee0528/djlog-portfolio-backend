@@ -1,6 +1,7 @@
 package com.example.djlogportfoliobackend.config;
 
 import com.example.djlogportfoliobackend.filter.JwtAuthenticationFilter;
+import com.example.djlogportfoliobackend.filter.RequestResponseLoggingFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,6 +25,7 @@ import java.util.Arrays;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final RequestResponseLoggingFilter requestResponseLoggingFilter;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -37,6 +39,7 @@ public class SecurityConfig {
                 .requestMatchers("GET", "/api/**").permitAll()
                 .anyRequest().authenticated()
             )
+            .addFilterBefore(requestResponseLoggingFilter, JwtAuthenticationFilter.class)
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         http.headers(headers -> headers.frameOptions().disable());
