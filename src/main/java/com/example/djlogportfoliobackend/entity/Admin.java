@@ -17,13 +17,13 @@ public class Admin {
     private Long id;
 
     @Column(unique = true, nullable = false)
-    private String username;
+    private String email;
 
     @Column(nullable = false)
     private String password;
 
-    public Admin(String username, String password) {
-        this.username = username;
+    public Admin(String email, String password) {
+        this.email = email;
         this.password = password;
     }
 }

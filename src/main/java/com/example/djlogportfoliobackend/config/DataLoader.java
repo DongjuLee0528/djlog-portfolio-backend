@@ -29,8 +29,8 @@ public class DataLoader implements ApplicationRunner {
     private final PasswordEncoder passwordEncoder;
 
     // application.properties 또는 application.yml에서 관리자 계정 정보를 주입
-    @Value("${admin.username}")
-    private String adminUsername;
+    @Value("${admin.email}")
+    private String adminEmail;
 
     @Value("${admin.password}")
     private String adminPassword;
@@ -54,22 +54,22 @@ public class DataLoader implements ApplicationRunner {
      * 이미 존재하는 경우 생성을 건너뛰어 중복 생성을 방지
      */
     private void createAdminIfNotExists() {
-        // 설정 파일에서 읽어온 username으로 기존 관리자 계정 존재 여부 확인
-        if (adminRepository.findByUsername(adminUsername).isEmpty()) {
+        // 설정 파일에서 읽어온 email으로 기존 관리자 계정 존재 여부 확인
+        if (adminRepository.findByEmail(adminEmail).isEmpty()) {
             // 평문 비밀번호를 암호화하여 저장 (보안을 위한 필수 작업)
             String encodedPassword = passwordEncoder.encode(adminPassword);
 
             // 새로운 관리자 엔티티 생성
-            Admin admin = new Admin(adminUsername, encodedPassword);
+            Admin admin = new Admin(adminEmail, encodedPassword);
 
             // 데이터베이스에 저장
             adminRepository.save(admin);
 
             // 로그 출력: 관리자 계정 생성 완료
-            log.info("[DATA_LOADER] Default admin user created: {}", adminUsername);
+            log.info("[DATA_LOADER] Default admin user created: {}", adminEmail);
         } else {
             // 로그 출력: 이미 관리자 계정이 존재함
-            log.info("[DATA_LOADER] Admin user already exists: {}", adminUsername);
+            log.info("[DATA_LOADER] Admin user already exists: {}", adminEmail);
         }
     }
 
