@@ -49,6 +49,9 @@ public class Project {
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProjectLink> links = new ArrayList<>();
 
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProjectQnA> qnaList = new ArrayList<>();
+
     public Project(String title, String category, ProjectStatus status, String description,
                    String image, List<String> tags, Integer order) {
         this.title = title;
