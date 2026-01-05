@@ -21,28 +21,23 @@ public class FileUploadController {
 
     private final FileUploadService fileUploadService;
 
-    @PostMapping("/image")
-    public ResponseEntity<Map<String, String>> uploadImage(@RequestParam("file") MultipartFile file) {
+    @PostMapping
+    public ResponseEntity<Map<String, String>> uploadFile(@RequestParam("file") MultipartFile file) {
         Map<String, String> response = new HashMap<>();
 
         try {
             String imageUrl = fileUploadService.uploadFile(file);
-            response.put("success", "true");
-            response.put("imageUrl", imageUrl);
-            response.put("message", "이미지 업로드 성공");
-
+            response.put("url", imageUrl);
             return ResponseEntity.ok(response);
 
         } catch (IllegalArgumentException e) {
             log.warn("Invalid file upload attempt: {}", e.getMessage());
-            response.put("success", "false");
-            response.put("message", e.getMessage());
+            response.put("error", e.getMessage());
             return ResponseEntity.badRequest().body(response);
 
         } catch (IOException e) {
             log.error("File upload failed", e);
-            response.put("success", "false");
-            response.put("message", "파일 업로드 중 오류가 발생했습니다.");
+            response.put("error", "파일 업로드 중 오류가 발생했습니다.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
