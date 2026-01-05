@@ -27,6 +27,14 @@
                     <mdc/>
                     <arguments/>
                     <stackTrace/>
+                    <pattern>
+                        <pattern>
+                            {
+                                "service": "djlog-portfolio-backend",
+                                "version": "1.0.0"
+                            }
+                        </pattern>
+                    </pattern>
                 </providers>
             </encoder>
         </appender>
