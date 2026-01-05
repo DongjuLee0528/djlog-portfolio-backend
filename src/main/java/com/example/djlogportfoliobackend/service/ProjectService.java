@@ -20,6 +20,10 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
+ * 프로젝트 관리 서비스
+ * 프로젝트에 대한 CRUD 작업과 다양한 조회 기능을 제공합니다.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -28,35 +32,75 @@ public class ProjectService {
 
     private final ProjectRepository projectRepository;
 
+    /**
+     * 전체 프로젝트 목록 조회
+     * 정렬 순서와 제목 순으로 정렬된 목록을 반환합니다.
+     *
+     * @return 전체 프로젝트 목록
+     */
     public List<ProjectResponse> getAllProjects() {
         return projectRepository.findAllByOrderByOrderAscTitleAsc().stream()
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
     }
 
+    /**
+     * 공개된 프로젝트 목록 조회
+     * PUBLISHED 상태의 프로젝트만 조회합니다.
+     *
+     * @return 공개된 프로젝트 목록
+     */
     public List<ProjectResponse> getPublishedProjects() {
         return projectRepository.findByStatusOrderByOrderAscTitleAsc(ProjectStatus.PUBLISHED).stream()
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
     }
 
+    /**
+     * 카테고리별 프로젝트 조회
+     * 대소문자를 구분하지 않고 해당 카테고리의 프로젝트를 조회합니다.
+     *
+     * @param category 조회할 카테고리명
+     * @return 카테고리에 해당하는 프로젝트 목록
+     */
     public List<ProjectResponse> getProjectsByCategory(String category) {
         return projectRepository.findByCategoryIgnoreCaseOrderByOrderAscTitleAsc(category).stream()
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
     }
 
+    /**
+     * 태그별 프로젝트 조회
+     * 대소문자를 구분하지 않고 해당 태그를 포함한 프로젝트를 조회합니다.
+     *
+     * @param tag 검색할 태그
+     * @return 해당 태그를 포함한 프로젝트 목록
+     */
     public List<ProjectResponse> getProjectsByTag(String tag) {
         return projectRepository.findByTagsContainingIgnoreCaseOrderByOrderAscTitleAsc(tag).stream()
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
     }
 
+    /**
+     * ID로 프로젝트 단건 조회
+     *
+     * @param id 조회할 프로젝트 ID
+     * @return 프로젝트 정보 (Optional)
+     */
     public Optional<ProjectResponse> getProjectById(UUID id) {
         return projectRepository.findById(id)
                 .map(this::convertToResponse);
     }
 
+    /**
+     * 새로운 프로젝트 생성
+     * 요청 데이터를 바탕으로 새로운 프로젝트를 생성합니다.
+     *
+     * @param request 프로젝트 생성 요청 데이터
+     * @return 생성된 프로젝트 정보
+     * @throws Exception 프로젝트 생성 실패 시
+     */
     @Transactional
     public ProjectResponse createProject(ProjectRequest request) {
         String traceId = MDC.get("traceId");
@@ -75,6 +119,15 @@ public class ProjectService {
         }
     }
 
+    /**
+     * 기존 프로젝트 수정
+     * ID로 프로젝트를 찾아 요청 데이터로 업데이트합니다.
+     *
+     * @param id 수정할 프로젝트 ID
+     * @param request 수정할 프로젝트 데이터
+     * @return 수정된 프로젝트 정보
+     * @throws RuntimeException 프로젝트를 찾을 수 없거나 수정 실패 시
+     */
     @Transactional
     public ProjectResponse updateProject(UUID id, ProjectRequest request) {
         String traceId = MDC.get("traceId");
@@ -106,6 +159,13 @@ public class ProjectService {
         }
     }
 
+    /**
+     * 프로젝트 삭제
+     * ID로 프로젝트를 찾아 삭제합니다.
+     *
+     * @param id 삭제할 프로젝트 ID
+     * @throws RuntimeException 프로젝트를 찾을 수 없거나 삭제 실패 시
+     */
     @Transactional
     public void deleteProject(UUID id) {
         String traceId = MDC.get("traceId");
@@ -126,6 +186,12 @@ public class ProjectService {
         }
     }
 
+    /**
+     * 요청 DTO를 엔티티로 변환
+     *
+     * @param request 프로젝트 요청 DTO
+     * @return 프로젝트 엔티티
+     */
     private Project convertToEntity(ProjectRequest request) {
         return new Project(
                 request.getTitle(),
@@ -138,6 +204,13 @@ public class ProjectService {
         );
     }
 
+    /**
+     * 엔티티를 응답 DTO로 변환
+     * 연관된 링크와 Q&A 정보도 함께 변환합니다.
+     *
+     * @param project 프로젝트 엔티티
+     * @return 프로젝트 응답 DTO
+     */
     private ProjectResponse convertToResponse(Project project) {
         ProjectResponse response = new ProjectResponse();
         response.setId(project.getId());
@@ -166,6 +239,12 @@ public class ProjectService {
         return response;
     }
 
+    /**
+     * 프로젝트 링크 엔티티를 DTO로 변환
+     *
+     * @param link 프로젝트 링크 엔티티
+     * @return 프로젝트 링크 DTO
+     */
     private ProjectLinkResponse convertToLinkResponse(ProjectLink link) {
         ProjectLinkResponse response = new ProjectLinkResponse();
         response.setId(link.getId());
@@ -176,6 +255,12 @@ public class ProjectService {
         return response;
     }
 
+    /**
+     * 프로젝트 Q&A 엔티티를 DTO로 변환
+     *
+     * @param qna 프로젝트 Q&A 엔티티
+     * @return 프로젝트 Q&A DTO
+     */
     private ProjectQnAResponse convertToQnAResponse(ProjectQnA qna) {
         ProjectQnAResponse response = new ProjectQnAResponse();
         response.setId(qna.getId());
