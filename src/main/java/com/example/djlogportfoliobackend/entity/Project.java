@@ -46,6 +46,9 @@ public class Project {
     @Column(name = "display_order")
     private Integer order = 0;
 
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProjectLink> links = new ArrayList<>();
+
     public Project(String title, String category, ProjectStatus status, String description,
                    String image, List<String> tags, Integer order) {
         this.title = title;
