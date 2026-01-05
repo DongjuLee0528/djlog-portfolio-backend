@@ -8,11 +8,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -20,15 +15,28 @@ public class ProfileService {
 
     private final ProfileRepository profileRepository;
 
-    public List<ProfileResponse> getAllProfiles() {
-        return profileRepository.findAll().stream()
-                .map(this::convertToResponse)
-                .collect(Collectors.toList());
+    public ProfileResponse getProfile() {
+        Profile profile = profileRepository.findAll().stream()
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("프로필을 찾을 수 없습니다."));
+        return convertToResponse(profile);
     }
 
-    public Optional<ProfileResponse> getProfileById(UUID id) {
-        return profileRepository.findById(id)
-                .map(this::convertToResponse);
+    @Transactional
+    public ProfileResponse updateProfile(ProfileRequest request) {
+        Profile profile = profileRepository.findAll().stream()
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("프로필을 찾을 수 없습니다."));
+
+        profile.setName(request.getName());
+        profile.setBio(request.getBio());
+        profile.setAbout(request.getAbout());
+        profile.setImage(request.getImage());
+        profile.setEmail(request.getEmail());
+        profile.setGithub(request.getGithub());
+
+        Profile savedProfile = profileRepository.save(profile);
+        return convertToResponse(savedProfile);
     }
 
     @Transactional
@@ -36,27 +44,6 @@ public class ProfileService {
         Profile profile = convertToEntity(request);
         Profile savedProfile = profileRepository.save(profile);
         return convertToResponse(savedProfile);
-    }
-
-    @Transactional
-    public ProfileResponse updateProfile(UUID id, ProfileRequest request) {
-        return profileRepository.findById(id)
-                .map(profile -> {
-                    profile.setName(request.getName());
-                    profile.setBio(request.getBio());
-                    profile.setAbout(request.getAbout());
-                    profile.setImage(request.getImage());
-                    profile.setEmail(request.getEmail());
-                    profile.setGithub(request.getGithub());
-                    Profile savedProfile = profileRepository.save(profile);
-                    return convertToResponse(savedProfile);
-                })
-                .orElseThrow(() -> new RuntimeException("Profile not found with id: " + id));
-    }
-
-    @Transactional
-    public void deleteProfile(UUID id) {
-        profileRepository.deleteById(id);
     }
 
     private Profile convertToEntity(ProfileRequest request) {

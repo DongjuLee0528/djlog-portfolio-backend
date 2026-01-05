@@ -78,7 +78,9 @@ public class DataLoader implements ApplicationRunner {
      * 데이터베이스에 프로필이 존재하지 않을 경우에만 기본 프로필을 생성
      */
     private void createDefaultProfileIfNotExists() {
-        if (profileRepository.count() == 0) {
+        long profileCount = profileRepository.count();
+
+        if (profileCount == 0) {
             Profile defaultProfile = new Profile(
                     "동주 이",
                     "풀스택 개발자",
@@ -91,8 +93,10 @@ public class DataLoader implements ApplicationRunner {
 
             profileRepository.save(defaultProfile);
             log.info("[DATA_LOADER] Default profile created for: {}", defaultProfile.getName());
+        } else if (profileCount == 1) {
+            log.info("[DATA_LOADER] Single profile already exists");
         } else {
-            log.info("[DATA_LOADER] Profile data already exists");
+            log.warn("[DATA_LOADER] Multiple profiles found ({}), but only one should exist for portfolio", profileCount);
         }
     }
 }
