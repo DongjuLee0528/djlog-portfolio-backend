@@ -22,7 +22,7 @@ public class ProjectController {
 
     @GetMapping
     public ResponseEntity<List<ProjectResponse>> getAllProjects(
-            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "published") String status,
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String tag) {
 
@@ -30,12 +30,14 @@ public class ProjectController {
 
         if ("published".equalsIgnoreCase(status)) {
             projects = projectService.getPublishedProjects();
+        } else if ("all".equalsIgnoreCase(status)) {
+            projects = projectService.getAllProjects();
         } else if (category != null && !category.trim().isEmpty()) {
             projects = projectService.getProjectsByCategory(category);
         } else if (tag != null && !tag.trim().isEmpty()) {
             projects = projectService.getProjectsByTag(tag);
         } else {
-            projects = projectService.getAllProjects();
+            projects = projectService.getPublishedProjects();
         }
 
         return ResponseEntity.ok(projects);

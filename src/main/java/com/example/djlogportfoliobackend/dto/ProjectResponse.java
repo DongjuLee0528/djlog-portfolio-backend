@@ -17,4 +17,6 @@ public class ProjectResponse {
     private String image;
     private List<String> tags;
     private Integer order;
+    private List<ProjectLinkResponse> links;
+    private List<ProjectQnAResponse> qnaList;
 }

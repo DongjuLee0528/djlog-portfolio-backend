@@ -2,7 +2,11 @@ package com.example.djlogportfoliobackend.service;
 
 import com.example.djlogportfoliobackend.dto.ProjectRequest;
 import com.example.djlogportfoliobackend.dto.ProjectResponse;
+import com.example.djlogportfoliobackend.dto.ProjectLinkResponse;
+import com.example.djlogportfoliobackend.dto.ProjectQnAResponse;
 import com.example.djlogportfoliobackend.entity.Project;
+import com.example.djlogportfoliobackend.entity.ProjectLink;
+import com.example.djlogportfoliobackend.entity.ProjectQnA;
 import com.example.djlogportfoliobackend.entity.ProjectStatus;
 import com.example.djlogportfoliobackend.repository.ProjectRepository;
 import lombok.RequiredArgsConstructor;
@@ -101,6 +105,40 @@ public class ProjectService {
         response.setImage(project.getImage());
         response.setTags(project.getTags());
         response.setOrder(project.getOrder());
+
+        // Convert ProjectLink entities to DTOs
+        if (project.getLinks() != null) {
+            response.setLinks(project.getLinks().stream()
+                    .map(this::convertToLinkResponse)
+                    .collect(Collectors.toList()));
+        }
+
+        // Convert ProjectQnA entities to DTOs
+        if (project.getQnaList() != null) {
+            response.setQnaList(project.getQnaList().stream()
+                    .map(this::convertToQnAResponse)
+                    .collect(Collectors.toList()));
+        }
+
+        return response;
+    }
+
+    private ProjectLinkResponse convertToLinkResponse(ProjectLink link) {
+        ProjectLinkResponse response = new ProjectLinkResponse();
+        response.setId(link.getId());
+        response.setProjectId(link.getProject().getId());
+        response.setLabel(link.getLabel());
+        response.setUrl(link.getUrl());
+        response.setDescription(link.getDescription());
+        return response;
+    }
+
+    private ProjectQnAResponse convertToQnAResponse(ProjectQnA qna) {
+        ProjectQnAResponse response = new ProjectQnAResponse();
+        response.setId(qna.getId());
+        response.setProjectId(qna.getProject().getId());
+        response.setQuestion(qna.getQuestion());
+        response.setAnswer(qna.getAnswer());
         return response;
     }
 }
