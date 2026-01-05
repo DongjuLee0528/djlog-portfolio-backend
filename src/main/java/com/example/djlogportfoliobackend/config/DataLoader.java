@@ -1,7 +1,9 @@
 package com.example.djlogportfoliobackend.config;
 
 import com.example.djlogportfoliobackend.entity.Admin;
+import com.example.djlogportfoliobackend.entity.Profile;
 import com.example.djlogportfoliobackend.repository.AdminRepository;
+import com.example.djlogportfoliobackend.repository.ProfileRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,6 +25,7 @@ import org.springframework.stereotype.Component;
 public class DataLoader implements ApplicationRunner {
 
     private final AdminRepository adminRepository;
+    private final ProfileRepository profileRepository;
     private final PasswordEncoder passwordEncoder;
 
     // application.properties 또는 application.yml에서 관리자 계정 정보를 주입
@@ -42,6 +45,7 @@ public class DataLoader implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) {
         createAdminIfNotExists();
+        createDefaultProfileIfNotExists();
     }
 
     /**
@@ -66,6 +70,29 @@ public class DataLoader implements ApplicationRunner {
         } else {
             // 로그 출력: 이미 관리자 계정이 존재함
             log.info("[DATA_LOADER] Admin user already exists: {}", adminUsername);
+        }
+    }
+
+    /**
+     * 기본 프로필 생성 메소드
+     * 데이터베이스에 프로필이 존재하지 않을 경우에만 기본 프로필을 생성
+     */
+    private void createDefaultProfileIfNotExists() {
+        if (profileRepository.count() == 0) {
+            Profile defaultProfile = new Profile(
+                    "동주 이",
+                    "풀스택 개발자",
+                    "안녕하세요! 백엔드와 프론트엔드 개발에 관심이 많은 개발자입니다.\n\n" +
+                    "Spring Boot, React, Vue.js 등의 기술을 활용하여 웹 애플리케이션을 개발합니다.",
+                    "/images/profile.jpg",
+                    "dongju.dev@example.com",
+                    "https://github.com/dongjulee"
+            );
+
+            profileRepository.save(defaultProfile);
+            log.info("[DATA_LOADER] Default profile created for: {}", defaultProfile.getName());
+        } else {
+            log.info("[DATA_LOADER] Profile data already exists");
         }
     }
 }
