@@ -50,10 +50,38 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(Arrays.asList("http://localhost:*", "https://yourdomain.com"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("*"));
+
+        // 환경별 도메인 설정
+        configuration.setAllowedOriginPatterns(Arrays.asList(
+            "http://localhost:*",           // 로컬 개발 환경
+            "https://localhost:*",          // 로컬 HTTPS
+            "https://djlog.dev",            // 프로덕션 도메인 (예시)
+            "https://www.djlog.dev",        // www 서브도메인
+            "https://*.vercel.app",         // Vercel 배포
+            "https://*.netlify.app"         // Netlify 배포
+        ));
+
+        configuration.setAllowedMethods(Arrays.asList(
+            "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"
+        ));
+
+        configuration.setAllowedHeaders(Arrays.asList(
+            "Authorization",
+            "Content-Type",
+            "X-Requested-With",
+            "Accept",
+            "Origin",
+            "Access-Control-Request-Method",
+            "Access-Control-Request-Headers"
+        ));
+
+        configuration.setExposedHeaders(Arrays.asList(
+            "Access-Control-Allow-Origin",
+            "Access-Control-Allow-Credentials"
+        ));
+
         configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L); // 1시간 preflight 캐시
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
