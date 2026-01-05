@@ -26,14 +26,18 @@ public class ProfileService {
     public ProfileResponse updateProfile(ProfileRequest request) {
         Profile profile = profileRepository.findAll().stream()
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("프로필을 찾을 수 없습니다."));
+                .orElse(null);
 
-        profile.setName(request.getName());
-        profile.setBio(request.getBio());
-        profile.setAbout(request.getAbout());
-        profile.setImage(request.getImage());
-        profile.setEmail(request.getEmail());
-        profile.setGithub(request.getGithub());
+        if (profile == null) {
+            profile = convertToEntity(request);
+        } else {
+            profile.setName(request.getName());
+            profile.setBio(request.getBio());
+            profile.setAbout(request.getAbout());
+            profile.setImage(request.getImage());
+            profile.setEmail(request.getEmail());
+            profile.setGithub(request.getGithub());
+        }
 
         Profile savedProfile = profileRepository.save(profile);
         return convertToResponse(savedProfile);
