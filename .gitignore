@@ -42,3 +42,9 @@ out/
 .env.development
 .env.test
 .env.production
+
+### Sensitive Data ###
+login.json
+*.key
+*.pem
+secrets/
