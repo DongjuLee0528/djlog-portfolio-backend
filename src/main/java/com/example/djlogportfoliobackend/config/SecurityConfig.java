@@ -51,15 +51,25 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // 환경별 도메인 설정
-        configuration.setAllowedOriginPatterns(Arrays.asList(
-            "http://localhost:*",           // 로컬 개발 환경
-            "https://localhost:*",          // 로컬 HTTPS
-            "https://djlog.dev",            // 프로덕션 도메인 (예시)
-            "https://www.djlog.dev",        // www 서브도메인
-            "https://*.vercel.app",         // Vercel 배포
-            "https://*.netlify.app"         // Netlify 배포
-        ));
+        // 환경별 도메인 설정 - 프로덕션에서는 실제 도메인만 허용하도록 수정 필요
+        String profile = System.getProperty("spring.profiles.active", "dev");
+        if ("prod".equals(profile)) {
+            // 프로덕션 환경: 실제 도메인만 허용
+            configuration.setAllowedOrigins(Arrays.asList(
+                "https://djlog.dev",
+                "https://www.djlog.dev"
+            ));
+        } else {
+            // 개발 환경: 로컬 및 배포 플랫폼 허용
+            configuration.setAllowedOriginPatterns(Arrays.asList(
+                "http://localhost:*",
+                "https://localhost:*",
+                "https://djlog.dev",
+                "https://www.djlog.dev",
+                "https://*.vercel.app",
+                "https://*.netlify.app"
+            ));
+        }
 
         configuration.setAllowedMethods(Arrays.asList(
             "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"
