@@ -47,7 +47,12 @@ public class RequestResponseLoggingFilter extends OncePerRequestFilter {
         long startTime = System.currentTimeMillis();
 
         ContentCachingRequestWrapper requestWrapper = new ContentCachingRequestWrapper(request, 1024);
-        ContentCachingResponseWrapper responseWrapper = new ContentCachingResponseWrapper(response);
+        ContentCachingResponseWrapper responseWrapper = new ContentCachingResponseWrapper(response) {
+            @Override
+            public int getBufferSize() {
+                return Math.min(super.getBufferSize(), 2048); // 응답 바디 크기를 2KB로 제한
+            }
+        };
 
         try {
             logRequest(requestWrapper, requestId);
@@ -113,12 +118,23 @@ public class RequestResponseLoggingFilter extends OncePerRequestFilter {
     /**
      * 요청 바디 로그 여부 판단
      * Content-Type을 기반으로 로그 기록 여부를 결정합니다.
+     * 민감한 정보가 포함된 경로는 로그에서 제외합니다.
      *
      * @param request HTTP 요청
      * @return 로그 기록 여부
      */
     private boolean shouldLogBody(HttpServletRequest request) {
         String contentType = request.getContentType();
+        String path = request.getRequestURI();
+
+        // 민감한 정보가 포함된 경로는 바디 로그 제외
+        if (path.contains("/auth/login") ||
+            path.contains("/auth") ||
+            path.contains("/password") ||
+            path.contains("/upload")) {
+            return false;
+        }
+
         return contentType != null &&
                (contentType.contains("application/json") ||
                 contentType.contains("application/x-www-form-urlencoded") ||
@@ -128,15 +144,15 @@ public class RequestResponseLoggingFilter extends OncePerRequestFilter {
     /**
      * 응답 바디 로그 여부 판단
      * Content-Type을 기반으로 로그 기록 여부를 결정합니다.
+     * 민감한 정보가 포함될 수 있는 응답은 로그에서 제외합니다.
      *
      * @param response 캐시된 HTTP 응답
      * @return 로그 기록 여부
      */
     private boolean shouldLogResponseBody(ContentCachingResponseWrapper response) {
-        String contentType = response.getContentType();
-        return contentType != null &&
-               (contentType.contains("application/json") ||
-                contentType.contains("text/"));
+        // JWT 토큰이나 민감한 정보가 포함될 수 있는 응답은 제외
+        // 일반적으로 인증 관련 응답에는 토큰이 포함되므로 로그하지 않음
+        return false; // 보안상 응답 바디는 기본적으로 로그하지 않음
     }
 
     /**
