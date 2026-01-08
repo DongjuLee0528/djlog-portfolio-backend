@@ -14,8 +14,14 @@ public class JwtUtil {
     private final SecretKey key;
     private final long jwtExpiration;
 
-    public JwtUtil(@Value("${jwt.secret:myDefaultSecretKeyThatIsAtLeast32Characters}") String secret,
+    public JwtUtil(@Value("${jwt.secret}") String secret,
                    @Value("${jwt.expiration:86400000}") long jwtExpiration) {
+        if (secret == null || secret.trim().isEmpty()) {
+            throw new IllegalArgumentException("JWT secret must be configured");
+        }
+        if (secret.getBytes().length < 32) {
+            throw new IllegalArgumentException("JWT secret must be at least 32 bytes long");
+        }
         this.key = Keys.hmacShaKeyFor(secret.getBytes());
         this.jwtExpiration = jwtExpiration;
     }
