@@ -51,24 +51,33 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // 환경별 도메인 설정 - 프로덕션에서는 실제 도메인만 허용하도록 수정 필요
+        // 환경별 도메인 설정 - 보안 강화
         String profile = System.getProperty("spring.profiles.active", "dev");
-        if ("prod".equals(profile)) {
-            // 프로덕션 환경: 실제 도메인만 허용
+        if ("prod".equals(profile) || "production".equals(profile)) {
+            // 프로덕션 환경: 실제 도메인만 엄격히 허용
             configuration.setAllowedOrigins(Arrays.asList(
                 "https://djlog.dev",
                 "https://www.djlog.dev"
             ));
-        } else {
-            // 개발 환경: 로컬 및 배포 플랫폼 허용
-            configuration.setAllowedOriginPatterns(Arrays.asList(
-                "http://localhost:*",
-                "https://localhost:*",
+        } else if ("staging".equals(profile) || "test".equals(profile)) {
+            // 스테이징/테스트 환경: 제한된 도메인 허용
+            configuration.setAllowedOrigins(Arrays.asList(
                 "https://djlog.dev",
                 "https://www.djlog.dev",
-                "https://*.vercel.app",
-                "https://*.netlify.app"
+                "https://staging-djlog.vercel.app",
+                "https://test-djlog.netlify.app"
             ));
+        } else {
+            // 개발 환경: 로컬호스트만 허용 (와일드카드 제거)
+            configuration.setAllowedOrigins(Arrays.asList(
+                "http://localhost:3000",
+                "http://localhost:3001",
+                "http://localhost:8080",
+                "https://localhost:3000",
+                "https://localhost:3001"
+            ));
+            // 개발 시에만 필요한 경우를 위한 패턴 (주석 처리)
+            // configuration.setAllowedOriginPatterns(Arrays.asList("http://localhost:*"));
         }
 
         configuration.setAllowedMethods(Arrays.asList(
