@@ -27,6 +27,7 @@ public class AuthService {
     /**
      * 관리자 로그인 처리
      * 이메일과 비밀번호를 검증하고 JWT 토큰을 생성합니다.
+     * 타이밍 공격 방지를 위해 사용자 존재 여부와 관계없이 동일한 처리 시간을 보장합니다.
      *
      * @param loginRequest 로그인 요청 정보 (이메일, 비밀번호)
      * @return 로그인 응답 (JWT 토큰)
@@ -36,19 +37,30 @@ public class AuthService {
         String traceId = MDC.get("traceId");
         log.info("[AUTH] Login attempt - TraceId: {} - Email: {}", traceId, loginRequest.getEmail());
 
-        Admin admin = adminRepository.findByEmail(loginRequest.getEmail())
-                .orElseThrow(() -> {
-                    log.warn("[AUTH] Login failed - TraceId: {} - User not found: {}", traceId, loginRequest.getEmail());
-                    return new RuntimeException("Invalid credentials");
-                });
+        boolean isValidCredentials = false;
+        String token = null;
 
-        if (!passwordEncoder.matches(loginRequest.getPassword(), admin.getPassword())) {
-            log.warn("[AUTH] Login failed - TraceId: {} - Invalid password for user: {}", traceId, loginRequest.getEmail());
+        // 사용자 조회
+        Admin admin = adminRepository.findByEmail(loginRequest.getEmail()).orElse(null);
+
+        if (admin != null) {
+            // 사용자가 존재하는 경우: 실제 비밀번호 검증
+            isValidCredentials = passwordEncoder.matches(loginRequest.getPassword(), admin.getPassword());
+            if (isValidCredentials) {
+                token = jwtUtil.generateToken(admin.getEmail());
+                log.info("[AUTH] Login successful - TraceId: {} - Email: {}", traceId, admin.getEmail());
+            }
+        } else {
+            // 사용자가 존재하지 않는 경우: 동일한 시간 소모를 위한 더미 검증
+            // 타이밍 공격 방지 목적
+            passwordEncoder.matches(loginRequest.getPassword(), "$2a$10$dummyHashToPreventTimingAttacks");
+        }
+
+        if (!isValidCredentials) {
+            log.warn("[AUTH] Login failed - TraceId: {} - Invalid credentials for: {}", traceId, loginRequest.getEmail());
             throw new RuntimeException("Invalid credentials");
         }
 
-        String token = jwtUtil.generateToken(admin.getEmail());
-        log.info("[AUTH] Login successful - TraceId: {} - Email: {}", traceId, admin.getEmail());
         return new LoginResponse(token);
     }
 
