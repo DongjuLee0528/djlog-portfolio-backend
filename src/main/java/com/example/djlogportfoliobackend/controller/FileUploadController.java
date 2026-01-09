@@ -3,11 +3,13 @@ package com.example.djlogportfoliobackend.controller;
 import com.example.djlogportfoliobackend.service.FileUploadService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -15,30 +17,66 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/upload")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = {"${security.cors.allowed-origins}"})
 @Slf4j
 public class FileUploadController {
 
     private final FileUploadService fileUploadService;
 
     @PostMapping
-    public ResponseEntity<Map<String, String>> uploadFile(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<Map<String, String>> uploadFile(
+            @RequestParam("file") MultipartFile file,
+            HttpServletRequest request) {
+
         Map<String, String> response = new HashMap<>();
 
         try {
+            // 요청 로깅
+            String clientIp = getClientIpAddress(request);
+            log.info("File upload request from IP: {}, filename: {}, size: {} bytes",
+                    clientIp, file.getOriginalFilename(), file.getSize());
+
             String imageUrl = fileUploadService.uploadFile(file);
             response.put("url", imageUrl);
-            return ResponseEntity.ok(response);
+
+            // 보안 헤더 추가
+            HttpHeaders headers = new HttpHeaders();
+            headers.add("X-Content-Type-Options", "nosniff");
+            headers.add("X-Frame-Options", "DENY");
+            headers.add("Content-Security-Policy", "default-src 'none'");
+
+            return ResponseEntity.ok().headers(headers).body(response);
 
         } catch (IllegalArgumentException e) {
-            log.warn("Invalid file upload attempt: {}", e.getMessage());
+            log.warn("Invalid file upload attempt from IP {}: {}", getClientIpAddress(request), e.getMessage());
             response.put("error", e.getMessage());
             return ResponseEntity.badRequest().body(response);
 
         } catch (IOException e) {
-            log.error("File upload failed", e);
+            log.error("File upload failed from IP {}: {}", getClientIpAddress(request), e.getMessage(), e);
             response.put("error", "파일 업로드 중 오류가 발생했습니다.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        } catch (Exception e) {
+            log.error("Unexpected error during file upload from IP {}: {}", getClientIpAddress(request), e.getMessage(), e);
+            response.put("error", "예상치 못한 오류가 발생했습니다.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
+    }
+
+    /**
+     * 클라이언트 IP 주소 추출
+     */
+    private String getClientIpAddress(HttpServletRequest request) {
+        String xForwardedFor = request.getHeader("X-Forwarded-For");
+        if (xForwardedFor != null && !xForwardedFor.isEmpty() && !"unknown".equalsIgnoreCase(xForwardedFor)) {
+            return xForwardedFor.split(",")[0].trim();
+        }
+
+        String xRealIp = request.getHeader("X-Real-IP");
+        if (xRealIp != null && !xRealIp.isEmpty() && !"unknown".equalsIgnoreCase(xRealIp)) {
+            return xRealIp;
+        }
+
+        return request.getRemoteAddr();
     }
 }
