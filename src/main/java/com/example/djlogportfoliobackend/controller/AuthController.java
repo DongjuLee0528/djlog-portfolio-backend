@@ -23,12 +23,8 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest loginRequest) {
-        try {
-            LoginResponse response = authService.login(loginRequest);
-            return ResponseEntity.ok(response);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(401).build();
-        }
+        LoginResponse response = authService.login(loginRequest);
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -52,7 +48,7 @@ public class AuthController {
             response.put("message", "로그아웃이 성공적으로 처리되었습니다.");
             return ResponseEntity.ok(response);
 
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             log.error("Logout failed: {}", e.getMessage());
             response.put("error", "로그아웃 처리 중 오류가 발생했습니다.");
             return ResponseEntity.status(500).body(response);

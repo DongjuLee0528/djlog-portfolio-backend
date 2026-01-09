@@ -3,6 +3,7 @@ package com.example.djlogportfoliobackend.service;
 import com.example.djlogportfoliobackend.dto.LoginRequest;
 import com.example.djlogportfoliobackend.dto.LoginResponse;
 import com.example.djlogportfoliobackend.entity.Admin;
+import com.example.djlogportfoliobackend.exception.AuthenticationException;
 import com.example.djlogportfoliobackend.repository.AdminRepository;
 import com.example.djlogportfoliobackend.service.SessionManagementService.SessionInfo;
 import com.example.djlogportfoliobackend.util.JwtUtil;
@@ -73,7 +74,7 @@ public class AuthService {
 
         if (!isValidCredentials) {
             log.warn("[AUTH] Login failed - TraceId: {} - Invalid credentials for: {}", traceId, loginRequest.getEmail());
-            throw new RuntimeException("Invalid credentials");
+            throw new AuthenticationException("잘못된 이메일 또는 비밀번호입니다.");
         }
 
         return new LoginResponse(token);
@@ -104,7 +105,7 @@ public class AuthService {
             log.info("[AUTH] Logout successful - TraceId: {}", traceId);
         } catch (Exception e) {
             log.error("[AUTH] Logout failed - TraceId: {} - Error: {}", traceId, e.getMessage(), e);
-            throw new RuntimeException("Logout failed");
+            throw new RuntimeException("로그아웃 처리 중 오류가 발생했습니다.");
         }
     }
 

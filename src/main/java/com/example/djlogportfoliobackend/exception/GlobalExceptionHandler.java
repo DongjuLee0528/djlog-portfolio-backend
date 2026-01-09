@@ -1,131 +1,112 @@
 package com.example.djlogportfoliobackend.exception;
 
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.context.request.WebRequest;
 
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * 전역 예외 처리 핸들러
+ * 애플리케이션 전체에서 발생하는 예외를 일관되게 처리합니다.
+ */
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<Map<String, Object>> handleRuntimeException(RuntimeException ex, WebRequest request) {
-        String traceId = MDC.get("traceId");
-        log.error("[ERROR] Runtime Exception occurred - TraceId: {} - Message: {}", traceId, ex.getMessage(), ex);
+    /**
+     * 인증 예외 처리
+     */
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<Map<String, String>> handleAuthenticationException(AuthenticationException e) {
+        log.warn("Authentication failed: {}", e.getMessage());
 
-        Map<String, Object> errorResponse = createErrorResponse(
-            HttpStatus.INTERNAL_SERVER_ERROR,
-            ex.getMessage(),
-            request.getDescription(false),
-            traceId
-        );
+        Map<String, String> error = new HashMap<>();
+        error.put("error", "AUTHENTICATION_FAILED");
+        error.put("message", e.getMessage());
 
-        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
     }
 
+    /**
+     * 유효성 검증 예외 처리
+     */
+    @ExceptionHandler(ValidationException.class)
+    public ResponseEntity<Map<String, String>> handleValidationException(ValidationException e) {
+        log.warn("Validation failed: {}", e.getMessage());
+
+        Map<String, String> error = new HashMap<>();
+        error.put("error", "VALIDATION_FAILED");
+        error.put("message", e.getMessage());
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    /**
+     * Spring Validation 예외 처리 (@Valid 어노테이션)
+     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, Object>> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex, WebRequest request) {
-        String traceId = MDC.get("traceId");
+    public ResponseEntity<Map<String, Object>> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+        log.warn("Validation failed for request: {}", e.getMessage());
+
+        Map<String, Object> error = new HashMap<>();
         Map<String, String> fieldErrors = new HashMap<>();
 
-        for (FieldError error : ex.getBindingResult().getFieldErrors()) {
-            fieldErrors.put(error.getField(), error.getDefaultMessage());
+        for (FieldError fieldError : e.getBindingResult().getFieldErrors()) {
+            fieldErrors.put(fieldError.getField(), fieldError.getDefaultMessage());
         }
 
-        log.warn("[VALIDATION_ERROR] Validation failed - TraceId: {} - Field Errors: {}", traceId, fieldErrors, ex);
+        error.put("error", "VALIDATION_FAILED");
+        error.put("message", "입력 데이터 검증에 실패했습니다.");
+        error.put("fieldErrors", fieldErrors);
 
-        Map<String, Object> errorResponse = createErrorResponse(
-            HttpStatus.BAD_REQUEST,
-            "입력 값 검증에 실패했습니다.",
-            request.getDescription(false),
-            traceId
-        );
-        errorResponse.put("fieldErrors", fieldErrors);
-
-        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
-    @ExceptionHandler(BindException.class)
-    public ResponseEntity<Map<String, Object>> handleBindException(BindException ex, WebRequest request) {
-        String traceId = MDC.get("traceId");
-        log.warn("[VALIDATION_ERROR] Bind exception - TraceId: {} - Message: {}", traceId, ex.getMessage(), ex);
-
-        Map<String, Object> errorResponse = createErrorResponse(
-            HttpStatus.BAD_REQUEST,
-            "입력 값 검증에 실패했습니다.",
-            request.getDescription(false),
-            traceId
-        );
-
-        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
-    }
-
-    @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<Map<String, Object>> handleBadCredentialsException(BadCredentialsException ex, WebRequest request) {
-        String traceId = MDC.get("traceId");
-        log.warn("[AUTH_ERROR] Authentication failed - TraceId: {} - Message: {}", traceId, ex.getMessage(), ex);
-
-        Map<String, Object> errorResponse = createErrorResponse(
-            HttpStatus.UNAUTHORIZED,
-            "인증에 실패했습니다.",
-            request.getDescription(false),
-            traceId
-        );
-
-        return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
-    }
-
+    /**
+     * 파일 업로드 예외 처리
+     */
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<Map<String, Object>> handleIllegalArgumentException(IllegalArgumentException ex, WebRequest request) {
-        String traceId = MDC.get("traceId");
-        log.warn("[ILLEGAL_ARGUMENT] Invalid argument - TraceId: {} - Message: {}", traceId, ex.getMessage(), ex);
+    public ResponseEntity<Map<String, String>> handleIllegalArgumentException(IllegalArgumentException e) {
+        log.warn("Invalid argument: {}", e.getMessage());
 
-        Map<String, Object> errorResponse = createErrorResponse(
-            HttpStatus.BAD_REQUEST,
-            ex.getMessage(),
-            request.getDescription(false),
-            traceId
-        );
+        Map<String, String> error = new HashMap<>();
+        error.put("error", "INVALID_ARGUMENT");
+        error.put("message", e.getMessage());
 
-        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
+    /**
+     * 일반 런타임 예외 처리
+     */
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<Map<String, String>> handleRuntimeException(RuntimeException e) {
+        log.error("Unexpected runtime exception: {}", e.getMessage(), e);
+
+        Map<String, String> error = new HashMap<>();
+        error.put("error", "INTERNAL_ERROR");
+        error.put("message", "서버 내부 오류가 발생했습니다.");
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    }
+
+    /**
+     * 예상치 못한 예외 처리
+     */
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, Object>> handleGenericException(Exception ex, WebRequest request) {
-        String traceId = MDC.get("traceId");
-        log.error("[UNEXPECTED_ERROR] Unexpected error occurred - TraceId: {} - Type: {} - Message: {}",
-                traceId, ex.getClass().getSimpleName(), ex.getMessage(), ex);
+    public ResponseEntity<Map<String, String>> handleException(Exception e) {
+        log.error("Unexpected exception: {}", e.getMessage(), e);
 
-        Map<String, Object> errorResponse = createErrorResponse(
-            HttpStatus.INTERNAL_SERVER_ERROR,
-            "서버 내부 오류가 발생했습니다.",
-            request.getDescription(false),
-            traceId
-        );
+        Map<String, String> error = new HashMap<>();
+        error.put("error", "UNKNOWN_ERROR");
+        error.put("message", "예상치 못한 오류가 발생했습니다.");
 
-        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
-    private Map<String, Object> createErrorResponse(HttpStatus status, String message, String path, String traceId) {
-        Map<String, Object> errorResponse = new HashMap<>();
-        errorResponse.put("timestamp", LocalDateTime.now());
-        errorResponse.put("status", status.value());
-        errorResponse.put("error", status.getReasonPhrase());
-        errorResponse.put("message", message);
-        errorResponse.put("path", path);
-        errorResponse.put("traceId", traceId);
-        return errorResponse;
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
 }
