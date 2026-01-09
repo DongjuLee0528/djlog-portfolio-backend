@@ -15,6 +15,8 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
+    private final SecretKey key;
+    private final long jwtExpiration;
     private final StringRedisTemplate redisTemplate;
     private static final String BLACKLIST_PREFIX = "jwt:blacklist:";
 
@@ -22,9 +24,6 @@ public class JwtUtil {
                    @Value("${jwt.expiration:86400000}") long jwtExpiration,
                    StringRedisTemplate redisTemplate) {
         this.redisTemplate = redisTemplate;
-
-    private final SecretKey key;
-    private final long jwtExpiration;
 
         // JWT Secret 검증
         if (secret == null || secret.trim().isEmpty()) {

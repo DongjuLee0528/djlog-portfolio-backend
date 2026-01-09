@@ -2,13 +2,13 @@ package com.example.djlogportfoliobackend.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 /**
@@ -23,11 +23,17 @@ import java.util.*;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class SessionManagementService {
 
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
+
+    public SessionManagementService(StringRedisTemplate redisTemplate) {
+        this.redisTemplate = redisTemplate;
+        this.objectMapper = new ObjectMapper();
+        // LocalDateTime 직렬화를 위한 설정
+        this.objectMapper.findAndRegisterModules();
+    }
 
     private static final String SESSION_PREFIX = "session:";
     private static final String USER_SESSIONS_PREFIX = "user_sessions:";
