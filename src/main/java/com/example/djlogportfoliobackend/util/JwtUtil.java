@@ -127,7 +127,7 @@ public class JwtUtil {
      */
     private void blacklistToken(String token, Date expiration) {
         try {
-            String tokenId = extractTokenIdFromSignature(token);
+            String tokenId = extractTokenId(token);
             String key = BLACKLIST_PREFIX + tokenId;
 
             long ttl = Math.max(0, expiration.getTime() - System.currentTimeMillis());
@@ -148,7 +148,7 @@ public class JwtUtil {
      */
     private boolean isTokenBlacklisted(String token) {
         try {
-            String tokenId = extractTokenIdFromSignature(token);
+            String tokenId = extractTokenId(token);
             String key = BLACKLIST_PREFIX + tokenId;
             return Boolean.TRUE.equals(redisTemplate.hasKey(key));
         } catch (Exception e) {
@@ -173,12 +173,23 @@ public class JwtUtil {
 
     /**
      * 토큰에서 JTI(JWT ID) 추출
+     * JTI가 없는 경우 토큰 서명에서 식별자를 추출합니다.
      *
      * @param token JWT 토큰
-     * @return JWT ID
+     * @return JWT ID 또는 토큰 식별자
      */
     public String extractTokenId(String token) {
-        return extractClaim(token, claims -> claims.getId());
+        try {
+            String jti = extractClaim(token, claims -> claims.getId());
+            if (jti != null && !jti.trim().isEmpty()) {
+                return jti;
+            }
+            // JTI가 없는 경우 fallback으로 서명 기반 식별자 사용
+            return extractTokenIdFromSignature(token);
+        } catch (Exception e) {
+            log.debug("Failed to extract JTI, using signature-based ID: {}", e.getMessage());
+            return extractTokenIdFromSignature(token);
+        }
     }
 
     /**
