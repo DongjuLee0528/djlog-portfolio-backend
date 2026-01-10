@@ -71,12 +71,12 @@ public class GlobalExceptionHandler {
     /**
      * 파일 업로드 예외 처리
      */
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<Map<String, String>> handleIllegalArgumentException(IllegalArgumentException e) {
-        log.warn("Invalid argument: {}", e.getMessage());
+    @ExceptionHandler(FileUploadException.class)
+    public ResponseEntity<Map<String, String>> handleFileUploadException(FileUploadException e) {
+        log.warn("File upload error: {}", e.getMessage());
 
         Map<String, String> error = new HashMap<>();
-        error.put("error", "INVALID_ARGUMENT");
+        error.put("error", "FILE_UPLOAD_ERROR");
         error.put("message", e.getMessage());
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
