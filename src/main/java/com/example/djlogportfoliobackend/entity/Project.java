@@ -43,6 +43,17 @@ public class Project {
     @Column(name = "tag")
     private List<String> tags = new ArrayList<>();
 
+    @ElementCollection
+    @CollectionTable(name = "project_skills", joinColumns = @JoinColumn(name = "project_id"))
+    @Column(name = "skill")
+    private List<String> skills = new ArrayList<>();
+
+    @Column
+    private String duration;
+
+    @Column
+    private String company;
+
     @Column(name = "display_order")
     private Integer order = 0;
 
@@ -53,13 +64,17 @@ public class Project {
     private List<ProjectQnA> qnaList = new ArrayList<>();
 
     public Project(String title, String category, ProjectStatus status, String description,
-                   String image, List<String> tags, Integer order) {
+                   String image, List<String> tags, List<String> skills, String duration,
+                   String company, Integer order) {
         this.title = title;
         this.category = category;
         this.status = status != null ? status : ProjectStatus.DRAFT;
         this.description = description;
         this.image = image;
         this.tags = tags != null ? tags : new ArrayList<>();
+        this.skills = skills != null ? skills : new ArrayList<>();
+        this.duration = duration;
+        this.company = company;
         this.order = order != null ? order : 0;
     }
 }

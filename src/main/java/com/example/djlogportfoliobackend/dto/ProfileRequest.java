@@ -71,4 +71,11 @@ public class ProfileRequest {
      * About 페이지나 Skills 섹션에서 표시됩니다.</p>
      */
     private List<String> skills;
+
+    /**
+     * 이력서 파일 URL (선택)
+     * <p>이력서 PDF 파일의 URL입니다.
+     * 파일 업로드를 통해 저장된 이력서 링크입니다.</p>
+     */
+    private String resume;
 }

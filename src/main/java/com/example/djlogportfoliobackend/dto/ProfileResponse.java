@@ -15,5 +15,6 @@ public class ProfileResponse {
     private String image;
     private String email;
     private String github;
+    private String resume;
     private List<String> skills;
 }

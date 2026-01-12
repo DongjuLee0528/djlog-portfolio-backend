@@ -16,6 +16,9 @@ public class ProjectResponse {
     private String description;
     private String image;
     private List<String> tags;
+    private List<String> skills;
+    private String duration;
+    private String company;
     private Integer order;
     private List<ProjectLinkResponse> links;
     private List<ProjectQnAResponse> qnaList;

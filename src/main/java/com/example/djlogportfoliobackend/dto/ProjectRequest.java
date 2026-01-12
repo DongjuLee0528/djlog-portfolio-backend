@@ -22,5 +22,11 @@ public class ProjectRequest {
 
     private List<String> tags;
 
+    private List<String> skills;
+
+    private String duration;
+
+    private String company;
+
     private Integer order;
 }

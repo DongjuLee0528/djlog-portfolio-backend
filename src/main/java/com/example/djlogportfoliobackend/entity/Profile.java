@@ -42,10 +42,19 @@ public class Profile {
     @Column
     private String github;
 
+    @Column
+    private String resume;
+
     @ElementCollection
     @CollectionTable(name = "profile_skills", joinColumns = @JoinColumn(name = "profile_id"))
     @Column(name = "skill")
     private List<String> skills = new ArrayList<>();
+
+    @OneToMany(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Education> educations = new ArrayList<>();
+
+    @OneToMany(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Certificate> certificates = new ArrayList<>();
 
     public Profile(String name, String bio, String about, String image, String email, String github) {
         this.name = name;
