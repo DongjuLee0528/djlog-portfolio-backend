@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -39,6 +41,11 @@ public class Profile {
 
     @Column
     private String github;
+
+    @ElementCollection
+    @CollectionTable(name = "profile_skills", joinColumns = @JoinColumn(name = "profile_id"))
+    @Column(name = "skill")
+    private List<String> skills = new ArrayList<>();
 
     public Profile(String name, String bio, String about, String image, String email, String github) {
         this.name = name;

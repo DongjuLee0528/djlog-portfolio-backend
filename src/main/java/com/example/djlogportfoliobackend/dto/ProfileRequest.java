@@ -4,6 +4,8 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
+import java.util.List;
+
 /**
  * 프로필 정보 수정 요청을 위한 DTO(Data Transfer Object)
  *
@@ -62,4 +64,11 @@ public class ProfileRequest {
      * 프로젝트 소스코드 링크로 활용됩니다.</p>
      */
     private String github;
+
+    /**
+     * 기술 스택 목록 (선택)
+     * <p>보유하고 있는 기술 스택들의 목록입니다.
+     * About 페이지나 Skills 섹션에서 표시됩니다.</p>
+     */
+    private List<String> skills;
 }
