@@ -22,7 +22,7 @@ public class ProjectRequest {
 
     private List<String> tags;
 
-    private List<String> skills;
+    private List<ProjectSkillRequest> skills;
 
     private String duration;
 

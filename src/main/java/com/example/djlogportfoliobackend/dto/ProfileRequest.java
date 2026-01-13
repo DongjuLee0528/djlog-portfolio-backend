@@ -70,7 +70,7 @@ public class ProfileRequest {
      * <p>보유하고 있는 기술 스택들의 목록입니다.
      * About 페이지나 Skills 섹션에서 표시됩니다.</p>
      */
-    private List<String> skills;
+    private List<SkillRequest> skills;
 
     /**
      * 이력서 파일 URL (선택)
