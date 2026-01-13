@@ -4,9 +4,11 @@ import com.example.djlogportfoliobackend.dto.ProjectRequest;
 import com.example.djlogportfoliobackend.dto.ProjectResponse;
 import com.example.djlogportfoliobackend.dto.ProjectLinkResponse;
 import com.example.djlogportfoliobackend.dto.ProjectQnAResponse;
+import com.example.djlogportfoliobackend.dto.ProjectSkillResponse;
 import com.example.djlogportfoliobackend.entity.Project;
 import com.example.djlogportfoliobackend.entity.ProjectLink;
 import com.example.djlogportfoliobackend.entity.ProjectQnA;
+import com.example.djlogportfoliobackend.entity.ProjectSkill;
 import com.example.djlogportfoliobackend.entity.ProjectStatus;
 import com.example.djlogportfoliobackend.repository.ProjectRepository;
 import lombok.RequiredArgsConstructor;
@@ -142,6 +144,8 @@ public class ProjectService {
                         project.setDescription(request.getDescription());
                         project.setImage(request.getImage());
                         project.setTags(request.getTags());
+                        project.setDuration(request.getDuration());
+                        project.setCompany(request.getCompany());
                         project.setOrder(request.getOrder() != null ? request.getOrder() : 0);
                         Project savedProject = projectRepository.save(project);
                         log.info("[PROJECT] Project updated successfully - TraceId: {} - ID: {} - Title: {}",
@@ -200,6 +204,8 @@ public class ProjectService {
                 request.getDescription(),
                 request.getImage(),
                 request.getTags(),
+                request.getDuration(),
+                request.getCompany(),
                 request.getOrder()
         );
     }
@@ -220,7 +226,16 @@ public class ProjectService {
         response.setDescription(project.getDescription());
         response.setImage(project.getImage());
         response.setTags(project.getTags());
+        response.setDuration(project.getDuration());
+        response.setCompany(project.getCompany());
         response.setOrder(project.getOrder());
+
+        // Convert ProjectSkill entities to DTOs
+        if (project.getSkills() != null) {
+            response.setSkills(project.getSkills().stream()
+                    .map(this::convertToSkillResponse)
+                    .collect(Collectors.toList()));
+        }
 
         // Convert ProjectLink entities to DTOs
         if (project.getLinks() != null) {
@@ -267,6 +282,20 @@ public class ProjectService {
         response.setProjectId(qna.getProject().getId());
         response.setQuestion(qna.getQuestion());
         response.setAnswer(qna.getAnswer());
+        return response;
+    }
+
+    /**
+     * 프로젝트 스킬 엔티티를 DTO로 변환
+     *
+     * @param skill 프로젝트 스킬 엔티티
+     * @return 프로젝트 스킬 DTO
+     */
+    private ProjectSkillResponse convertToSkillResponse(ProjectSkill skill) {
+        ProjectSkillResponse response = new ProjectSkillResponse();
+        response.setId(skill.getId());
+        response.setName(skill.getName());
+        response.setCategory(skill.getCategory());
         return response;
     }
 }
