@@ -27,6 +27,9 @@ public class Profile {
     private String name;
 
     @Column
+    private String job;
+
+    @Column
     private String bio;
 
     @Column(columnDefinition = "TEXT")

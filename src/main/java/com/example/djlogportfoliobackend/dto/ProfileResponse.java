@@ -10,6 +10,7 @@ public class ProfileResponse {
 
     private UUID id;
     private String name;
+    private String job;
     private String bio;
     private String about;
     private String image;

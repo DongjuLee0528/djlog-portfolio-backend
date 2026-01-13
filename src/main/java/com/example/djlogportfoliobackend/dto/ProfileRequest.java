@@ -30,6 +30,13 @@ public class ProfileRequest {
     private String name;
 
     /**
+     * 직업 (선택)
+     * <p>현재 직업이나 포지션입니다.
+     * 메인 페이지나 프로필 섹션에서 표시됩니다.</p>
+     */
+    private String job;
+
+    /**
      * 간단한 소개 (선택)
      * <p>한 줄 정도의 짧은 자기소개 문구입니다.
      * 메인 페이지나 헤더 영역에서 간단히 소개할 때 사용됩니다.</p>
