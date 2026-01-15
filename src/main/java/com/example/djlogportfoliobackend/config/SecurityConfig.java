@@ -17,6 +17,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.util.Arrays;
 
@@ -27,6 +28,9 @@ public class SecurityConfig {
 
     // JWT 토큰 검증 및 파싱을 위한 유틸 클래스
     private final JwtUtil jwtUtil;
+
+    // 보안 헤더 필터
+    private final SecurityHeadersConfig securityHeadersConfig;
 
     /**
      * Spring Security의 핵심 설정
@@ -62,6 +66,12 @@ public class SecurityConfig {
 
                         // 그 외 요청은 JWT 인증 필요
                         .anyRequest().authenticated()
+                )
+
+                // 보안 헤더 필터를 가장 먼저 실행
+                .addFilterBefore(
+                        securityHeadersConfig.securityHeadersFilter(),
+                        UsernamePasswordAuthenticationFilter.class
                 )
 
                 // UsernamePasswordAuthenticationFilter 이전에 JWT 필터 실행
