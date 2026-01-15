@@ -72,16 +72,16 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
 
-                // 1. 보안 헤더 필터를 가장 먼저 실행
+                // 1. 보안 헤더 필터를 가장 먼저 실행 (모든 요청에 대해)
                 .addFilterBefore(
                         securityHeadersConfig.securityHeadersFilter(),
-                        UsernamePasswordAuthenticationFilter.class
+                        RateLimitFilter.class
                 )
 
                 // 2. Rate Limiting 필터를 두 번째로 실행 (JWT 검증 전에 요청 제한)
                 .addFilterBefore(
                         rateLimitFilter,
-                        UsernamePasswordAuthenticationFilter.class
+                        JwtAuthenticationFilter.class
                 )
 
                 // 3. JWT 필터를 마지막에 실행
