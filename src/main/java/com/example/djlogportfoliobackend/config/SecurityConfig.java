@@ -1,6 +1,7 @@
 package com.example.djlogportfoliobackend.config;
 
 import com.example.djlogportfoliobackend.filter.JwtAuthenticationFilter;
+import com.example.djlogportfoliobackend.filter.RateLimitFilter;
 import com.example.djlogportfoliobackend.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -31,6 +32,9 @@ public class SecurityConfig {
 
     // 보안 헤더 필터
     private final SecurityHeadersConfig securityHeadersConfig;
+
+    // Rate Limiting 필터
+    private final RateLimitFilter rateLimitFilter;
 
     /**
      * Spring Security의 핵심 설정
@@ -68,13 +72,19 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
 
-                // 보안 헤더 필터를 가장 먼저 실행
+                // 1. 보안 헤더 필터를 가장 먼저 실행
                 .addFilterBefore(
                         securityHeadersConfig.securityHeadersFilter(),
                         UsernamePasswordAuthenticationFilter.class
                 )
 
-                // UsernamePasswordAuthenticationFilter 이전에 JWT 필터 실행
+                // 2. Rate Limiting 필터를 두 번째로 실행 (JWT 검증 전에 요청 제한)
+                .addFilterBefore(
+                        rateLimitFilter,
+                        UsernamePasswordAuthenticationFilter.class
+                )
+
+                // 3. JWT 필터를 마지막에 실행
                 .addFilterBefore(
                         new JwtAuthenticationFilter(jwtUtil),
                         UsernamePasswordAuthenticationFilter.class
