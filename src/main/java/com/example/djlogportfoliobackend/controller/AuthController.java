@@ -13,6 +13,16 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * 인증 관련 REST API 컨트롤러
+ *
+ * 관리자 로그인/로그아웃 기능을 제공한다.
+ * JWT 토큰 기반 인증을 사용하며, 로그아웃 시 토큰을 블랙리스트에 추가하여 무효화한다.
+ *
+ * 주요 기능:
+ * - 관리자 로그인 (JWT 토큰 발급)
+ * - 관리자 로그아웃 (JWT 토큰 무효화)
+ */
 @Slf4j
 @RestController
 @RequestMapping("/api/auth")
