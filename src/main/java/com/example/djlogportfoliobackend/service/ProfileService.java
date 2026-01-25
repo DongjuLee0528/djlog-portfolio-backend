@@ -15,6 +15,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * 프로필 관리 서비스
+ *
+ * 사용자의 개인 프로필 정보를 관리한다.
+ * 프로필은 시스템에 단 하나만 존재하며, 기술 스택 정보도 함께 관리한다.
+ *
+ * 주요 기능:
+ * - 프로필 정보 조회
+ * - 프로필 정보 수정 (기술 스택 포함)
+ * - 프로필 생성 (최초 설정 시)
+ * - 엔티티와 DTO 간 변환
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
