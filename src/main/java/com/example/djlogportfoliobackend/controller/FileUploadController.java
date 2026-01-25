@@ -14,6 +14,18 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * 파일 업로드 REST API 컨트롤러
+ *
+ * 이미지 파일 업로드 기능을 제공한다.
+ * 보안 검증과 로깅을 포함하며, 지원되는 파일 형식과 크기를 제한한다.
+ *
+ * 보안 기능:
+ * - 파일 형식 및 크기 검증
+ * - IP 주소 추적 및 로깅
+ * - 보안 헤더 자동 추가
+ * - CORS 제한 적용
+ */
 @RestController
 @RequestMapping("/api/upload")
 @RequiredArgsConstructor
