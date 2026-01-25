@@ -11,6 +11,24 @@ import javax.crypto.SecretKey;
 import java.time.Duration;
 import java.util.Date;
 
+/**
+ * JWT 토큰 처리 유틸리티 클래스
+ *
+ * JWT 토큰의 생성, 검증, 블랙리스트 관리 기능을 제공한다.
+ * Redis를 사용하여 로그아웃된 토큰들을 블랙리스트로 관리하여
+ * 보안성을 강화한다.
+ *
+ * 주요 기능:
+ * - JWT 토큰 생성 및 검증
+ * - 토큰 블랙리스트 관리 (Redis 기반)
+ * - 토큰 만료 시간 및 클레임 추출
+ * - 안전한 비밀 키 검증 및 초기화
+ *
+ * 보안 고려사항:
+ * - 비밀 키는 최소 32바이트 이상이어야 함
+ * - 로그아웃 시 토큰을 블랙리스트에 추가하여 재사용 방지
+ * - Redis TTL을 사용하여 블랙리스트 자동 정리
+ */
 @Slf4j
 @Component
 public class JwtUtil {
