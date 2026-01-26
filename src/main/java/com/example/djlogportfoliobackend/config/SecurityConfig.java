@@ -22,6 +22,25 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.util.Arrays;
 
+/**
+ * Spring Security 메인 설정 클래스
+ *
+ * JWT 기반 인증 시스템과 다층 보안 필터를 구성한다.
+ * 세션을 사용하지 않는 Stateless 아키텍처로 설계되었으며,
+ * 환경별 CORS 정책과 다양한 보안 헤더를 적용한다.
+ *
+ * 보안 필터 실행 순서:
+ * 1. SecurityHeadersFilter: 모든 요청에 보안 헤더 추가
+ * 2. RateLimitFilter: 요청 빈도 제한
+ * 3. JwtAuthenticationFilter: JWT 토큰 검증 및 인증
+ *
+ * 주요 기능:
+ * - JWT 기반 인증/인가
+ * - 환경별 CORS 설정 (dev/staging/prod)
+ * - Rate Limiting 적용
+ * - 보안 헤더 자동 추가
+ * - BCrypt 비밀번호 암호화
+ */
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
