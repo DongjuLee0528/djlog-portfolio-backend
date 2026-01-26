@@ -8,6 +8,17 @@ import lombok.Setter;
 
 import java.util.UUID;
 
+/**
+ * 프로젝트에서 사용된 기술 스택 정보를 관리하는 엔티티
+ *
+ * 프로젝트와 기술 스택 간의 관계를 나타내며,
+ * 해당 프로젝트에서 사용된 구체적인 기술의 이름과 카테고리를 저장한다.
+ *
+ * 주요 속성:
+ * - name: 기술명 (Java, Spring Boot, React 등)
+ * - category: 기술 카테고리 (Frontend, Backend, Database, DevOps 등)
+ * - project: 이 기술을 사용한 프로젝트
+ */
 @Entity
 @Table(name = "project_skill")
 @Getter
