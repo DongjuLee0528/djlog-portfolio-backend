@@ -35,6 +35,20 @@ public class FileUploadController {
 
     private final FileUploadService fileUploadService;
 
+    /**
+     * 이미지 파일 업로드 API
+     * 클라이언트로부터 이미지 파일을 받아 서버에 저장하고 웹 접근 가능한 URL을 반환합니다.
+     *
+     * 보안 기능:
+     * - 파일 형식 검증 (이미지 파일만 허용)
+     * - 파일 크기 제한 (최대 10MB)
+     * - 매직 넘버 검증으로 실제 파일 내용 확인
+     * - 클라이언트 IP 로깅 및 추적
+     *
+     * @param file 업로드할 이미지 파일 (multipart/form-data)
+     * @param request HTTP 요청 객체 (IP 추출용)
+     * @return 업로드된 파일의 웹 접근 URL 또는 에러 메시지
+     */
     @PostMapping
     public ResponseEntity<Map<String, String>> uploadFile(
             @RequestParam("file") MultipartFile file,
@@ -77,6 +91,11 @@ public class FileUploadController {
 
     /**
      * 클라이언트 IP 주소 추출
+     * 프록시나 로드밸런서를 고려하여 실제 클라이언트 IP를 가져옵니다.
+     * X-Forwarded-For 헤더를 우선적으로 확인하고, X-Real-IP 헤더, 최종적으로 RemoteAddr을 확인합니다.
+     *
+     * @param request HTTP 요청 객체
+     * @return 클라이언트의 실제 IP 주소
      */
     private String getClientIpAddress(HttpServletRequest request) {
         String xForwardedFor = request.getHeader("X-Forwarded-For");
