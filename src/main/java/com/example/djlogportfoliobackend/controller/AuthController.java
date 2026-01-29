@@ -31,6 +31,13 @@ public class AuthController {
 
     private final AuthService authService;
 
+    /**
+     * 관리자 로그인 API
+     * 이메일과 비밀번호를 검증하여 JWT 토큰을 발급합니다.
+     *
+     * @param loginRequest 로그인 요청 정보 (이메일, 비밀번호)
+     * @return JWT 토큰을 포함한 로그인 응답
+     */
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest loginRequest) {
         LoginResponse response = authService.login(loginRequest);
