@@ -34,6 +34,13 @@ public class ProfileService {
 
     private final ProfileRepository profileRepository;
 
+    /**
+     * 현재 프로필 조회
+     * 시스템에 저장된 단일 프로필을 조회합니다.
+     *
+     * @return 프로필 응답 DTO
+     * @throws RuntimeException 프로필을 찾을 수 없는 경우
+     */
     public ProfileResponse getProfile() {
         Profile profile = profileRepository.findAll().stream()
                 .findFirst()
@@ -41,6 +48,14 @@ public class ProfileService {
         return convertToResponse(profile);
     }
 
+    /**
+     * 프로필 정보 수정
+     * 기존 프로필이 있으면 수정하고, 없으면 새로 생성합니다.
+     * 기술 스택 정보는 기존 데이터를 모두 삭제하고 새로 추가합니다.
+     *
+     * @param request 프로필 수정 요청 DTO
+     * @return 수정된 프로필 응답 DTO
+     */
     @Transactional
     public ProfileResponse updateProfile(ProfileRequest request) {
         Profile profile = profileRepository.findAll().stream()
@@ -74,6 +89,13 @@ public class ProfileService {
         return convertToResponse(savedProfile);
     }
 
+    /**
+     * 새 프로필 생성
+     * 새로운 프로필을 생성하고 데이터베이스에 저장합니다.
+     *
+     * @param request 프로필 생성 요청 DTO
+     * @return 생성된 프로필 응답 DTO
+     */
     @Transactional
     public ProfileResponse createProfile(ProfileRequest request) {
         Profile profile = convertToEntity(request);
@@ -81,6 +103,13 @@ public class ProfileService {
         return convertToResponse(savedProfile);
     }
 
+    /**
+     * 프로필 요청 DTO를 엔티티로 변환
+     * 요청 DTO의 정보를 바탕으로 Profile 엔티티를 생성하고 기술 스택도 함께 설정합니다.
+     *
+     * @param request 프로필 요청 DTO
+     * @return Profile 엔티티
+     */
     private Profile convertToEntity(ProfileRequest request) {
         Profile profile = new Profile(
                 request.getName(),
@@ -106,6 +135,13 @@ public class ProfileService {
         return profile;
     }
 
+    /**
+     * 프로필 엔티티를 응답 DTO로 변환
+     * Profile 엔티티의 정보를 바탕으로 응답 DTO를 생성하고 기술 스택도 함께 변환합니다.
+     *
+     * @param profile Profile 엔티티
+     * @return ProfileResponse DTO
+     */
     private ProfileResponse convertToResponse(Profile profile) {
         ProfileResponse response = new ProfileResponse();
         response.setId(profile.getId());
