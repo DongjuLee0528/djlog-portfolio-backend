@@ -77,6 +77,9 @@ public class SecurityConfig {
 
                 // 요청별 접근 권한 설정
                 .authorizeHttpRequests(auth -> auth
+                        // CORS preflight 요청(OPTIONS) 허용
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
                         // 로그인 API는 인증 없이 허용
                         .requestMatchers("/api/auth/login").permitAll()
 
