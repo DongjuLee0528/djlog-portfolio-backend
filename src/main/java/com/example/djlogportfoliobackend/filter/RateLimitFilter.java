@@ -43,16 +43,22 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
         String clientIp = getClientIpAddress(request);
         String key = "rate_limit:" + clientIp;
+        String requestInfo = String.format("%s %s", request.getMethod(), request.getRequestURI());
+
+        log.debug("[RATE_LIMIT] Processing request: {} from IP: {}", requestInfo, clientIp);
 
         Integer currentCount = rateLimitCache.getIfPresent(key);
         if (currentCount == null) {
             currentCount = 0;
+            log.debug("[RATE_LIMIT] New IP detected: {} - initializing count to 0", clientIp);
         }
+
+        log.debug("[RATE_LIMIT] Current count for IP {}: {} (max: {})", clientIp, currentCount, MAX_REQUESTS_PER_MINUTE);
 
         if (currentCount >= MAX_REQUESTS_PER_MINUTE) {
             String traceId = MDC.get("traceId");
-            log.warn("[RATE_LIMIT] Rate limit exceeded - TraceId: {} - IP: {} - Count: {}",
-                    traceId, clientIp, currentCount);
+            log.warn("[RATE_LIMIT] Rate limit exceeded - TraceId: {} - IP: {} - Count: {} - Request: {}",
+                    traceId, clientIp, currentCount, requestInfo);
 
             response.setStatus(429); // 429 Too Many Requests
             response.setContentType("application/json");
@@ -61,7 +67,11 @@ public class RateLimitFilter extends OncePerRequestFilter {
         }
 
         rateLimitCache.put(key, currentCount + 1);
+        log.debug("[RATE_LIMIT] Updated count for IP {}: {} -> {}", clientIp, currentCount, currentCount + 1);
+
+        log.debug("[RATE_LIMIT] Allowing request: {} from IP: {}", requestInfo, clientIp);
         filterChain.doFilter(request, response);
+        log.debug("[RATE_LIMIT] Completed request: {} from IP: {}", requestInfo, clientIp);
     }
 
     /**
