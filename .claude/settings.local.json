@@ -3,7 +3,8 @@
     "allow": [
       "Bash(curl:*)",
       "Bash(find:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(./gradlew:*)"
     ],
     "deny": [],
     "ask": []
