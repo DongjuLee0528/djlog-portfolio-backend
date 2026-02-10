@@ -27,14 +27,14 @@ public class EnvironmentConfig {
     @Value("${DB_USERNAME:NOT_SET}")
     private String dbUsername;
 
-    @Value("${ADMIN_USERNAME:NOT_SET}")
-    private String adminUsername;
+    @Value("${admin.email:NOT_SET}")
+    private String adminEmail;
 
     @PostConstruct
     public void logEnvironmentVariables() {
         log.info("[ENV_CHECK] DB_URL: {}", dbUrl);
         log.info("[ENV_CHECK] DB_USERNAME: {}", dbUsername);
-        log.info("[ENV_CHECK] ADMIN_USERNAME: {}", adminUsername);
+        log.info("[ENV_CHECK] admin.email: {}", adminEmail);
 
         // System environment variables check
         log.info("[SYS_ENV] DB_URL: {}", System.getenv("DB_URL"));
