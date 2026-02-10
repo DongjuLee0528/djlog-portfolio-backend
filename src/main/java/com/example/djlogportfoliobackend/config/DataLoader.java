@@ -28,11 +28,11 @@ public class DataLoader implements ApplicationRunner {
     private final ProfileRepository profileRepository;
     private final PasswordEncoder passwordEncoder;
 
-    // .env 파일에서 관리자 계정 정보를 주입
-    @Value("${ADMIN_USERNAME}")
+    // application.properties 또는 application.yml에서 관리자 계정 정보를 주입
+    @Value("${admin.email}")
     private String adminEmail;
 
-    @Value("${ADMIN_PASSWORD}")
+    @Value("${admin.password}")
     private String adminPassword;
 
     /**
