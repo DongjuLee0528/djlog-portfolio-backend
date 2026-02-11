@@ -7,6 +7,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -36,6 +38,11 @@ public class ProjectController {
             @RequestParam(defaultValue = "published") String status,
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String tag) {
+
+        // 비인증 사용자가 'all'을 요청하면 강제로 'published'로 변경
+        if ("all".equalsIgnoreCase(status) && !isAuthenticated()) {
+            status = "published";
+        }
 
         List<ProjectResponse> projects;
 
@@ -106,5 +113,16 @@ public class ProjectController {
     public ResponseEntity<Void> deleteProject(@PathVariable UUID id) {
         projectService.deleteProject(id);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * 현재 사용자가 인증되었는지 확인합니다.
+     *
+     * @return 인증 여부
+     */
+    private boolean isAuthenticated() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication != null && authentication.isAuthenticated() && 
+               !"anonymousUser".equals(authentication.getPrincipal());
     }
 }
