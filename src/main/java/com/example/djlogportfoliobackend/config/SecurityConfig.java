@@ -45,8 +45,14 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/**").permitAll()
+                        // 공개 데이터 조회 엔드포인트 화이트리스트 (GET 요청만 허용)
+                        .requestMatchers(HttpMethod.GET, "/api/profile").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/projects/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/educations/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/certificates/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/skills/**").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
+                        // 그 외 모든 요청은 인증 필요
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(securityHeadersConfig.securityHeadersFilter(), UsernamePasswordAuthenticationFilter.class)
