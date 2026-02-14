@@ -14,6 +14,10 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
+ * 자격증 정보 관리 서비스
+ * 자격증 정보의 CRUD 작업을 처리하고 비즈니스 로직을 담당합니다.
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -22,12 +26,23 @@ public class CertificateService {
     private final CertificateRepository certificateRepository;
     private final ProfileRepository profileRepository;
 
+    /**
+     * 모든 자격증 정보 조회
+     * 발급일순으로 내림차순 정렬하여 반환합니다.
+     * @return 자격증 정보 리스트
+     */
     public List<CertificateResponse> getAllCertificates() {
         return certificateRepository.findAllByOrderByIssueDateDesc().stream()
                 .map(CertificateResponse::new)
                 .collect(Collectors.toList());
     }
 
+    /**
+     * 새로운 자격증 정보 등록
+     * @param request 자격증 정보 등록 요청 DTO
+     * @return 등록된 자격증 정보 응답 DTO
+     * @throws RuntimeException 프로필이 존재하지 않을 때
+     */
     @Transactional
     public CertificateResponse createCertificate(CertificateRequest request) {
         Profile profile = profileRepository.findAll().stream().findFirst()
@@ -45,6 +60,13 @@ public class CertificateService {
         return new CertificateResponse(savedCertificate);
     }
 
+    /**
+     * 자격증 정보 수정
+     * @param id 수정할 자격증 정보 ID
+     * @param request 자격증 정보 수정 요청 DTO
+     * @return 수정된 자격증 정보 응답 DTO
+     * @throws RuntimeException 자격증 정보를 찾을 수 없을 때
+     */
     @Transactional
     public CertificateResponse updateCertificate(UUID id, CertificateRequest request) {
         Certificate certificate = certificateRepository.findById(id)
@@ -58,6 +80,11 @@ public class CertificateService {
         return new CertificateResponse(certificate);
     }
 
+    /**
+     * 자격증 정보 삭제
+     * @param id 삭제할 자격증 정보 ID
+     * @throws RuntimeException 자격증 정보를 찾을 수 없을 때
+     */
     @Transactional
     public void deleteCertificate(UUID id) {
         if (!certificateRepository.existsById(id)) {
