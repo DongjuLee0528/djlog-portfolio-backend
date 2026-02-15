@@ -30,6 +30,11 @@ public class EnvironmentConfig {
     @Value("${admin.email:NOT_SET}")
     private String adminEmail;
 
+    /**
+     * 애플리케이션 시작 후 환경 변수 검증 및 로그 출력
+     * 중요한 설정값들이 제대로 설정되었는지 확인하고 로그로 기록한다.
+     * 시스템 환경변수와 스프링 프로퍼티 값을 모두 확인하여 설정 불일치를 감지할 수 있다.
+     */
     @PostConstruct
     public void logEnvironmentVariables() {
         log.info("[ENV_CHECK] DB_URL: {}", dbUrl);
