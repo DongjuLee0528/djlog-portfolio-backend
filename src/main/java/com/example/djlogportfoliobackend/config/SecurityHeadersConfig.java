@@ -26,6 +26,12 @@ import java.io.IOException;
 @Configuration
 public class SecurityHeadersConfig {
 
+    /**
+     * 보안 헤더를 자동으로 추가하는 필터 생성
+     * 모든 HTTP 응답에 웹 보안 헤더들을 추가하여 다양한 웹 공격으로부터 보호한다.
+     *
+     * @return 보안 헤더를 추가하는 OncePerRequestFilter
+     */
     @Bean
     public OncePerRequestFilter securityHeadersFilter() {
         return new OncePerRequestFilter() {
