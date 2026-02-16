@@ -26,22 +26,32 @@ import java.util.UUID;
 @NoArgsConstructor
 public class ProjectSkill {
 
+    /** 프로젝트 기술의 고유 식별자 */
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    /** 기술명 (예: Java, Spring Boot, React) */
     @Column(nullable = false)
     @NotBlank(message = "기술명은 필수입니다")
     private String name;
 
+    /** 기술 카테고리 (Frontend, Backend, Database, DevOps, Tools 등) */
     @Column(nullable = false)
     @NotBlank(message = "카테고리는 필수입니다")
-    private String category; // Frontend, Backend, Database, DevOps, Tools, etc.
+    private String category;
 
+    /** 이 기술이 사용된 프로젝트 */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id")
     private Project project;
 
+    /**
+     * ProjectSkill 생성자
+     * @param name 기술명
+     * @param category 기술 카테고리
+     * @param project 기술이 사용된 프로젝트
+     */
     public ProjectSkill(String name, String category, Project project) {
         this.name = name;
         this.category = category;
