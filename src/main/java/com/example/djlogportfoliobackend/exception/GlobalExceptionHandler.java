@@ -20,6 +20,20 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     /**
+     * 리소스 찾을 수 없음 예외 처리 (404)
+     */
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleResourceNotFoundException(ResourceNotFoundException e) {
+        log.warn("Resource not found: {}", e.getMessage());
+
+        Map<String, String> error = new HashMap<>();
+        error.put("error", "RESOURCE_NOT_FOUND");
+        error.put("message", e.getMessage());
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+
+    /**
      * 인증 예외 처리
      */
     @ExceptionHandler(AuthenticationException.class)
