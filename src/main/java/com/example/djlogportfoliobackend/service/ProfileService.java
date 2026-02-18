@@ -171,11 +171,6 @@ public class ProfileService {
      * @return SkillResponse DTO
      */
     private SkillResponse convertToSkillResponse(Skill skill) {
-        SkillResponse response = new SkillResponse();
-        response.setId(skill.getId());
-        response.setName(skill.getName());
-        response.setCategory(skill.getCategory());
-        response.setProficiency(skill.getProficiency());
-        return response;
+        return new SkillResponse(skill);
     }
 }
