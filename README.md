@@ -4,7 +4,7 @@
 프로젝트 관리, 프로필 정보, 파일 업로드, 관리자 인증 기능을 제공합니다.
 
 ## Tech Stack
-- **Framework**: Spring Boot 4.0.1
+- **Framework**: Spring Boot 3.3.6
 - **Language**: Java 17
 - **Database**: MySQL + Spring Data JPA
 - **Authentication**: JWT + Spring Security
@@ -34,6 +34,9 @@
 
 - **프로필 관리**
   - 개인 프로필 정보 조회/수정
+  - 학력 정보 CRUD
+  - 자격증 정보 CRUD
+  - 기술/스킬 정보 CRUD
 
 - **파일 업로드**
   - 이미지 파일 업로드
@@ -75,19 +78,43 @@ PUT /api/profile                  # 프로필 정보 수정 (인증 필요)
 POST /api/upload                  # 파일 업로드 (인증 필요)
 ```
 
+### 학력 (Education)
+```
+GET    /api/educations            # 학력 목록 조회
+POST   /api/educations            # 새 학력 추가 (인증 필요)
+PUT    /api/educations/{id}       # 학력 수정 (인증 필요)
+DELETE /api/educations/{id}       # 학력 삭제 (인증 필요)
+```
+
+### 자격증 (Certificate)
+```
+GET    /api/certificates          # 자격증 목록 조회
+POST   /api/certificates          # 새 자격증 추가 (인증 필요)
+PUT    /api/certificates/{id}     # 자격증 수정 (인증 필요)
+DELETE /api/certificates/{id}     # 자격증 삭제 (인증 필요)
+```
+
+### 기술/스킬 (Skills)
+```
+GET    /api/skills                # 기술/스킬 목록 조회
+POST   /api/skills                # 새 기술/스킬 추가 (인증 필요)
+PUT    /api/skills/{id}           # 기술/스킬 수정 (인증 필요)
+DELETE /api/skills/{id}           # 기술/스킬 삭제 (인증 필요)
+```
+
 ## Project Structure
 ```
 src/
   main/
     java/com/example/djlogportfoliobackend/
-      config/           # 설정 클래스 (Security, Environment, DataLoader)
-      controller/       # REST API 컨트롤러
-      dto/             # 데이터 전송 객체
-      entity/          # JPA 엔티티
+      config/           # 설정 클래스 (Security, Environment, DataLoader, Rate Limit 등)
+      controller/       # REST API 컨트롤러 (Auth, Project, Profile, File, Education, Certificate, Skill)
+      dto/             # 데이터 전송 객체 (Request/Response DTOs)
+      entity/          # JPA 엔티티 (Admin, Project, Profile, Education, Certificate, Skill 등)
       exception/       # 커스텀 예외 및 글로벌 예외 처리
-      filter/          # JWT 인증 필터
+      filter/          # JWT 인증 필터, 요청 로깅 필터, Rate Limit 필터
       repository/      # JPA 리포지토리
-      service/         # 비즈니스 로직 서비스
+      service/         # 비즈니스 로직 서비스 (JWT 블랙리스트, 세션 관리, 파일 업로드 등)
       util/           # 유틸리티 클래스 (JWT 등)
     resources/
       application.properties           # 기본 설정
