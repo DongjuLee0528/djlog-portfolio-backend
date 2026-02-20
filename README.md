@@ -156,12 +156,33 @@ cd djlog-portfolio-backend
 
 2. 환경 변수 설정 (.env 파일 생성)
 ```
+# 데이터베이스 설정
 DB_URL=jdbc:mysql://localhost:3306/portfolio
 DB_USERNAME=your_username
 DB_PASSWORD=your_password
-JWT_SECRET=your_jwt_secret_key
+
+# JWT 토큰 설정
+JWT_SECRET=your_jwt_secret_key_at_least_32_characters_long
+
+# Redis 설정
 REDIS_HOST=localhost
 REDIS_PORT=6379
+REDIS_PASSWORD=your_redis_password
+REDIS_DATABASE=0
+
+# 관리자 계정 설정 (초기 관리자 생성용)
+ADMIN_USERNAME=admin@example.com
+ADMIN_PASSWORD=your_admin_password
+
+# 보안 설정
+CORS_ALLOWED_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
+RATE_LIMIT_RPM=60
+
+# 파일 업로드 설정
+FILE_UPLOAD_DIR=uploads
+
+# Spring 프로파일 설정
+SPRING_PROFILES_ACTIVE=dev
 ```
 
 3. 데이터베이스 스키마 생성
