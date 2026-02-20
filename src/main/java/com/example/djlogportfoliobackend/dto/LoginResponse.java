@@ -16,5 +16,5 @@ public class LoginResponse {
      * JWT 액세스 토큰
      * 인증된 사용자의 API 요청에 사용됩니다.
      */
-    private String accessToken;
+    private String token;
 }
