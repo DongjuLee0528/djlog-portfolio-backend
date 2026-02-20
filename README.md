@@ -181,7 +181,7 @@ CREATE DATABASE portfolio CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ### API Testing
 - Base URL: `http://localhost:8080`
 - Swagger UI: `http://localhost:8080/swagger-ui.html` (개발 환경)
-- Health Check: `http://localhost:8080/actuator/health`
+- API 테스트: Postman 등의 도구를 사용하여 각 엔드포인트 테스트
 
 ## Build & Deploy
 ```bash
