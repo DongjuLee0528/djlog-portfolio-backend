@@ -44,5 +44,6 @@ public class EnvironmentConfig {
         // System environment variables check
         log.info("[SYS_ENV] DB_URL: {}", System.getenv("DB_URL"));
         log.info("[SYS_ENV] DB_USERNAME: {}", System.getenv("DB_USERNAME"));
+        log.info("[SYS_ENV] ADMIN_USERNAME: {}", System.getenv("ADMIN_USERNAME"));
     }
 }
