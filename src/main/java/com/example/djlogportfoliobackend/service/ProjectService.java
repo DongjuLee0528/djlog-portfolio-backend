@@ -10,6 +10,7 @@ import com.example.djlogportfoliobackend.entity.ProjectLink;
 import com.example.djlogportfoliobackend.entity.ProjectQnA;
 import com.example.djlogportfoliobackend.entity.ProjectSkill;
 import com.example.djlogportfoliobackend.entity.ProjectStatus;
+import com.example.djlogportfoliobackend.exception.ResourceNotFoundException;
 import com.example.djlogportfoliobackend.repository.ProjectRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -140,42 +141,35 @@ public class ProjectService {
         String traceId = MDC.get("traceId");
         log.info("[PROJECT] Updating project - TraceId: {} - ID: {} - Title: {}", traceId, id, request.getTitle());
 
-        try {
-            return projectRepository.findById(id)
-                    .map(project -> {
-                        // 기본 정보 업데이트
-                        project.setTitle(request.getTitle());
-                        project.setCategory(request.getCategory());
-                        project.setStatus(request.getStatus() != null ? request.getStatus() : ProjectStatus.DRAFT);
-                        project.setDescription(request.getDescription());
-                        project.setImage(request.getImage());
-                        project.setTags(request.getTags());
-                        project.setDuration(request.getDuration());
-                        project.setCompany(request.getCompany());
-                        project.setOrder(request.getOrder() != null ? request.getOrder() : 0);
-                        
-                        // 연관 데이터 업데이트 (Skills, Links, QnA)
-                        // 기존 데이터를 모두 지우고 새로 추가하는 방식 (orphanRemoval 동작)
-                        project.getSkills().clear();
-                        project.getLinks().clear();
-                        project.getQnaList().clear();
-                        
-                        updateProjectRelations(project, request);
-                        
-                        Project savedProject = projectRepository.save(project);
-                        log.info("[PROJECT] Project updated successfully - TraceId: {} - ID: {} - Title: {}",
-                                traceId, savedProject.getId(), savedProject.getTitle());
-                        return convertToResponse(savedProject);
-                    })
-                    .orElseThrow(() -> {
-                        log.warn("[PROJECT] Project not found for update - TraceId: {} - ID: {}", traceId, id);
-                        return new RuntimeException("프로젝트를 찾을 수 없습니다. ID: " + id);
-                    });
-        } catch (Exception e) {
-            log.error("[PROJECT] Failed to update project - TraceId: {} - ID: {} - Error: {}",
-                    traceId, id, e.getMessage(), e);
-            throw e;
-        }
+        Project project = projectRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.warn("[PROJECT] Project not found for update - TraceId: {} - ID: {}", traceId, id);
+                    return new ResourceNotFoundException("프로젝트를 찾을 수 없습니다. ID: " + id);
+                });
+
+        // 기본 정보 업데이트
+        project.setTitle(request.getTitle());
+        project.setCategory(request.getCategory());
+        project.setStatus(request.getStatus() != null ? request.getStatus() : ProjectStatus.DRAFT);
+        project.setDescription(request.getDescription());
+        project.setImage(request.getImage());
+        project.setTags(request.getTags());
+        project.setDuration(request.getDuration());
+        project.setCompany(request.getCompany());
+        project.setOrder(request.getOrder() != null ? request.getOrder() : 0);
+        
+        // 연관 데이터 업데이트 (Skills, Links, QnA)
+        // 기존 데이터를 모두 지우고 새로 추가하는 방식 (orphanRemoval 동작)
+        project.getSkills().clear();
+        project.getLinks().clear();
+        project.getQnaList().clear();
+        
+        updateProjectRelations(project, request);
+        
+        Project savedProject = projectRepository.save(project);
+        log.info("[PROJECT] Project updated successfully - TraceId: {} - ID: {} - Title: {}",
+                traceId, savedProject.getId(), savedProject.getTitle());
+        return convertToResponse(savedProject);
     }
 
     /**
@@ -190,19 +184,13 @@ public class ProjectService {
         String traceId = MDC.get("traceId");
         log.info("[PROJECT] Deleting project - TraceId: {} - ID: {}", traceId, id);
 
-        try {
-            if (!projectRepository.existsById(id)) {
-                log.warn("[PROJECT] Project not found for deletion - TraceId: {} - ID: {}", traceId, id);
-                throw new RuntimeException("프로젝트를 찾을 수 없습니다. ID: " + id);
-            }
-
-            projectRepository.deleteById(id);
-            log.info("[PROJECT] Project deleted successfully - TraceId: {} - ID: {}", traceId, id);
-        } catch (Exception e) {
-            log.error("[PROJECT] Failed to delete project - TraceId: {} - ID: {} - Error: {}",
-                    traceId, id, e.getMessage(), e);
-            throw e;
+        if (!projectRepository.existsById(id)) {
+            log.warn("[PROJECT] Project not found for deletion - TraceId: {} - ID: {}", traceId, id);
+            throw new ResourceNotFoundException("프로젝트를 찾을 수 없습니다. ID: " + id);
         }
+
+        projectRepository.deleteById(id);
+        log.info("[PROJECT] Project deleted successfully - TraceId: {} - ID: {}", traceId, id);
     }
 
     /**
