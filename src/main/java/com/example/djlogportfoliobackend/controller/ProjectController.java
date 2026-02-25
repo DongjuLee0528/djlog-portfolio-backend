@@ -70,7 +70,7 @@ public class ProjectController {
     @GetMapping("/{id}")
     public ResponseEntity<ProjectResponse> getProjectById(@PathVariable UUID id) {
         return projectService.getProjectById(id)
-                .map(project -> ResponseEntity.ok(project))
+                .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
@@ -95,12 +95,8 @@ public class ProjectController {
      */
     @PutMapping("/{id}")
     public ResponseEntity<ProjectResponse> updateProject(@PathVariable UUID id, @Valid @RequestBody ProjectRequest request) {
-        try {
-            ProjectResponse updatedProject = projectService.updateProject(id, request);
-            return ResponseEntity.ok(updatedProject);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+        ProjectResponse updatedProject = projectService.updateProject(id, request);
+        return ResponseEntity.ok(updatedProject);
     }
 
     /**
