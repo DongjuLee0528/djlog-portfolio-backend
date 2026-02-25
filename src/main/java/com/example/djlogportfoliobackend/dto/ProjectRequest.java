@@ -1,6 +1,7 @@
 package com.example.djlogportfoliobackend.dto;
 
 import com.example.djlogportfoliobackend.entity.ProjectStatus;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
@@ -49,7 +50,20 @@ public class ProjectRequest {
     /**
      * 프로젝트에서 사용한 기술 스택 목록
      */
+    @Valid
     private List<ProjectSkillRequest> skills;
+
+    /**
+     * 프로젝트 관련 링크 목록
+     */
+    @Valid
+    private List<ProjectLinkRequest> links;
+
+    /**
+     * 프로젝트 Q&A 목록
+     */
+    @Valid
+    private List<ProjectQnARequest> qnaList;
 
     /**
      * 프로젝트 진행 기간
