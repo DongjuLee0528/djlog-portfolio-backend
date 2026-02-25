@@ -17,6 +17,7 @@ import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -110,6 +111,10 @@ public class ProjectService {
 
         try {
             Project project = convertToEntity(request);
+            
+            // 연관 데이터 설정 (Skills, Links, QnA)
+            updateProjectRelations(project, request);
+            
             Project savedProject = projectRepository.save(project);
             log.info("[PROJECT] Project created successfully - TraceId: {} - ID: {} - Title: {}",
                     traceId, savedProject.getId(), savedProject.getTitle());
@@ -138,6 +143,7 @@ public class ProjectService {
         try {
             return projectRepository.findById(id)
                     .map(project -> {
+                        // 기본 정보 업데이트
                         project.setTitle(request.getTitle());
                         project.setCategory(request.getCategory());
                         project.setStatus(request.getStatus() != null ? request.getStatus() : ProjectStatus.DRAFT);
@@ -147,6 +153,15 @@ public class ProjectService {
                         project.setDuration(request.getDuration());
                         project.setCompany(request.getCompany());
                         project.setOrder(request.getOrder() != null ? request.getOrder() : 0);
+                        
+                        // 연관 데이터 업데이트 (Skills, Links, QnA)
+                        // 기존 데이터를 모두 지우고 새로 추가하는 방식 (orphanRemoval 동작)
+                        project.getSkills().clear();
+                        project.getLinks().clear();
+                        project.getQnaList().clear();
+                        
+                        updateProjectRelations(project, request);
+                        
                         Project savedProject = projectRepository.save(project);
                         log.info("[PROJECT] Project updated successfully - TraceId: {} - ID: {} - Title: {}",
                                 traceId, savedProject.getId(), savedProject.getTitle());
@@ -187,6 +202,46 @@ public class ProjectService {
             log.error("[PROJECT] Failed to delete project - TraceId: {} - ID: {} - Error: {}",
                     traceId, id, e.getMessage(), e);
             throw e;
+        }
+    }
+
+    /**
+     * 프로젝트 연관 데이터(Skills, Links, QnA) 업데이트
+     * 요청 DTO의 데이터를 엔티티 리스트로 변환하여 프로젝트에 추가합니다.
+     */
+    private void updateProjectRelations(Project project, ProjectRequest request) {
+        // Skills
+        if (request.getSkills() != null) {
+            request.getSkills().forEach(skillReq -> {
+                ProjectSkill skill = new ProjectSkill();
+                skill.setName(skillReq.getName());
+                skill.setCategory(skillReq.getCategory());
+                skill.setProject(project);
+                project.getSkills().add(skill);
+            });
+        }
+
+        // Links
+        if (request.getLinks() != null) {
+            request.getLinks().forEach(linkReq -> {
+                ProjectLink link = new ProjectLink();
+                link.setLabel(linkReq.getLabel());
+                link.setUrl(linkReq.getUrl());
+                link.setDescription(linkReq.getDescription());
+                link.setProject(project);
+                project.getLinks().add(link);
+            });
+        }
+
+        // QnA
+        if (request.getQnaList() != null) {
+            request.getQnaList().forEach(qnaReq -> {
+                ProjectQnA qna = new ProjectQnA();
+                qna.setQuestion(qnaReq.getQuestion());
+                qna.setAnswer(qnaReq.getAnswer());
+                qna.setProject(project);
+                project.getQnaList().add(qna);
+            });
         }
     }
 
