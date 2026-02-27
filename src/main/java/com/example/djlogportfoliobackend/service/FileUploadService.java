@@ -26,9 +26,6 @@ public class FileUploadService {
     @Value("${file.upload.dir}")
     private String uploadDir;
 
-    @Value("${file.upload.max-file-size:10MB}")
-    private String maxFileSize;
-
     private static final List<String> ALLOWED_EXTENSIONS = Arrays.asList(
             "jpg", "jpeg", "png", "gif", "webp"
     );
@@ -228,7 +225,4 @@ public class FileUploadService {
         return uploadPath;
     }
 
-    private boolean isImageFile(String extension) {
-        return ALLOWED_EXTENSIONS.contains(extension.toLowerCase());
-    }
 }
