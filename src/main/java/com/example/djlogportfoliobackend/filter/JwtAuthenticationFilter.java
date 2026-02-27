@@ -1,6 +1,10 @@
 package com.example.djlogportfoliobackend.filter;
 
 import com.example.djlogportfoliobackend.util.JwtUtil;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.UnsupportedJwtException;
+import io.jsonwebtoken.security.SignatureException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -59,8 +63,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             jwt = authorizationHeader.substring(7);
             try {
                 username = jwtUtil.extractUsername(jwt);
+            } catch (ExpiredJwtException e) {
+                logger.debug("JWT token expired: " + e.getMessage());
+            } catch (MalformedJwtException e) {
+                logger.debug("JWT token malformed: " + e.getMessage());
+            } catch (UnsupportedJwtException e) {
+                logger.debug("JWT token unsupported: " + e.getMessage());
+            } catch (SignatureException e) {
+                logger.debug("JWT signature invalid: " + e.getMessage());
+            } catch (IllegalArgumentException e) {
+                logger.debug("JWT token argument invalid: " + e.getMessage());
             } catch (Exception e) {
-                logger.debug("JWT token extraction failed: " + e.getMessage());
+                logger.warn("Unexpected JWT token processing error: " + e.getMessage());
             }
         }
 
