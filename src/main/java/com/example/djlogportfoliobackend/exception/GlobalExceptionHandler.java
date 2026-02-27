@@ -1,6 +1,7 @@
 package com.example.djlogportfoliobackend.exception;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -18,6 +19,9 @@ import java.util.Map;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @Value("${logging.level.com.example.djlogportfoliobackend:INFO}")
+    private String loggingLevel;
 
     /**
      * 리소스 찾을 수 없음 예외 처리 (404)
@@ -101,7 +105,11 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, String>> handleRuntimeException(RuntimeException e) {
-        log.error("Unexpected runtime exception: {}", e.getMessage(), e);
+        if (isDebugLoggingEnabled()) {
+            log.error("Unexpected runtime exception: {}", e.getMessage(), e);
+        } else {
+            log.error("Unexpected runtime exception: {}", e.getMessage());
+        }
 
         Map<String, String> error = new HashMap<>();
         error.put("error", "INTERNAL_ERROR");
@@ -115,12 +123,24 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, String>> handleException(Exception e) {
-        log.error("Unexpected exception: {}", e.getMessage(), e);
+        if (isDebugLoggingEnabled()) {
+            log.error("Unexpected exception: {}", e.getMessage(), e);
+        } else {
+            log.error("Unexpected exception: {}", e.getMessage());
+        }
 
         Map<String, String> error = new HashMap<>();
         error.put("error", "UNKNOWN_ERROR");
         error.put("message", "예상치 못한 오류가 발생했습니다.");
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    }
+
+    /**
+     * 디버그 로깅 레벨 확인
+     * DEBUG 레벨일 때만 스택 트레이스를 로그에 출력
+     */
+    private boolean isDebugLoggingEnabled() {
+        return "DEBUG".equalsIgnoreCase(loggingLevel) || "TRACE".equalsIgnoreCase(loggingLevel);
     }
 }
