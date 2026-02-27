@@ -186,7 +186,8 @@ public class JwtUtil {
         if (parts.length != 3) {
             throw new IllegalArgumentException("Invalid JWT token format");
         }
-        return parts[2].length() > 10 ? parts[2].substring(parts[2].length() - 10) : parts[2];
+        final int TOKEN_ID_LENGTH = 10;
+        return parts[2].length() > TOKEN_ID_LENGTH ? parts[2].substring(parts[2].length() - TOKEN_ID_LENGTH) : parts[2];
     }
 
     /**
