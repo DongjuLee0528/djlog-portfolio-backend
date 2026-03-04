@@ -3,12 +3,11 @@ package com.example.djlogportfoliobackend.controller;
 import com.example.djlogportfoliobackend.dto.ProjectRequest;
 import com.example.djlogportfoliobackend.dto.ProjectResponse;
 import com.example.djlogportfoliobackend.service.ProjectService;
+import com.example.djlogportfoliobackend.service.SecurityService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,6 +23,7 @@ import java.util.UUID;
 public class ProjectController {
 
     private final ProjectService projectService;
+    private final SecurityService securityService;
 
     /**
      * 프로젝트 목록을 조회합니다.
@@ -39,10 +39,8 @@ public class ProjectController {
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String tag) {
 
-        // 비인증 사용자가 'all'을 요청하면 강제로 'published'로 변경
-        if ("all".equalsIgnoreCase(status) && !isAuthenticated()) {
-            status = "published";
-        }
+        // 권한에 따른 상태 검증
+        status = securityService.validateProjectStatusAccess(status);
 
         List<ProjectResponse> projects;
 
@@ -111,14 +109,4 @@ public class ProjectController {
         return ResponseEntity.noContent().build();
     }
 
-    /**
-     * 현재 사용자가 인증되었는지 확인합니다.
-     *
-     * @return 인증 여부
-     */
-    private boolean isAuthenticated() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return authentication != null && authentication.isAuthenticated() && 
-               !"anonymousUser".equals(authentication.getPrincipal());
-    }
 }
