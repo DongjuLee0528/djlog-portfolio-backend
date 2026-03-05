@@ -1,5 +1,6 @@
 package com.example.djlogportfoliobackend.filter;
 
+import com.example.djlogportfoliobackend.util.NetworkUtil;
 import com.github.benmanes.caffeine.cache.Cache;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -8,6 +9,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -24,8 +26,9 @@ import java.io.IOException;
 public class RateLimitFilter extends OncePerRequestFilter {
 
     private final Cache<String, Integer> rateLimitCache;
-    /** 분당 최대 요청 수 */
-    private static final int MAX_REQUESTS_PER_MINUTE = 100;
+
+    @Value("${security.rate-limit.requests-per-minute:100}")
+    private int maxRequestsPerMinute;
 
     /**
      * 요청 빈도 제한 처리
@@ -41,7 +44,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
 
-        String clientIp = getClientIpAddress(request);
+        String clientIp = NetworkUtil.getClientIpAddress(request);
         String key = "rate_limit:" + clientIp;
         String requestInfo = String.format("%s %s", request.getMethod(), request.getRequestURI());
 
@@ -53,9 +56,9 @@ public class RateLimitFilter extends OncePerRequestFilter {
             log.debug("[RATE_LIMIT] New IP detected: {} - initializing count to 0", clientIp);
         }
 
-        log.debug("[RATE_LIMIT] Current count for IP {}: {} (max: {})", clientIp, currentCount, MAX_REQUESTS_PER_MINUTE);
+        log.debug("[RATE_LIMIT] Current count for IP {}: {} (max: {})", clientIp, currentCount, maxRequestsPerMinute);
 
-        if (currentCount >= MAX_REQUESTS_PER_MINUTE) {
+        if (currentCount >= maxRequestsPerMinute) {
             String traceId = MDC.get("traceId");
             log.warn("[RATE_LIMIT] Rate limit exceeded - TraceId: {} - IP: {} - Count: {} - Request: {}",
                     traceId, clientIp, currentCount, requestInfo);
@@ -74,24 +77,4 @@ public class RateLimitFilter extends OncePerRequestFilter {
         log.debug("[RATE_LIMIT] Completed request: {} from IP: {}", requestInfo, clientIp);
     }
 
-    /**
-     * 클라이언트 IP 주소 추출
-     * 프록시나 로드밸런서를 고려하여 실제 클라이언트 IP를 가져옵니다.
-     *
-     * @param request HTTP 요청
-     * @return 클라이언트 IP 주소
-     */
-    private String getClientIpAddress(HttpServletRequest request) {
-        String xForwardedFor = request.getHeader("X-Forwarded-For");
-        if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
-            return xForwardedFor.split(",")[0].trim();
-        }
-
-        String xRealIp = request.getHeader("X-Real-IP");
-        if (xRealIp != null && !xRealIp.isEmpty()) {
-            return xRealIp;
-        }
-
-        return request.getRemoteAddr();
-    }
 }
