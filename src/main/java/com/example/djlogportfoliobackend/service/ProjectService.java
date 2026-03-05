@@ -39,11 +39,12 @@ public class ProjectService {
     /**
      * 전체 프로젝트 목록 조회
      * 정렬 순서와 제목 순으로 정렬된 목록을 반환합니다.
+     * 연관 엔티티도 함께 조회하여 N+1 쿼리를 방지합니다.
      *
      * @return 전체 프로젝트 목록
      */
     public List<ProjectResponse> getAllProjects() {
-        return projectRepository.findAllByOrderByOrderAscTitleAsc().stream()
+        return projectRepository.findAllWithDetails().stream()
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
     }
@@ -51,11 +52,12 @@ public class ProjectService {
     /**
      * 공개된 프로젝트 목록 조회
      * PUBLISHED 상태의 프로젝트만 조회합니다.
+     * 연관 엔티티도 함께 조회하여 N+1 쿼리를 방지합니다.
      *
      * @return 공개된 프로젝트 목록
      */
     public List<ProjectResponse> getPublishedProjects() {
-        return projectRepository.findByStatusOrderByOrderAscTitleAsc(ProjectStatus.PUBLISHED).stream()
+        return projectRepository.findByStatusWithDetails(ProjectStatus.PUBLISHED).stream()
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
     }
@@ -88,12 +90,13 @@ public class ProjectService {
 
     /**
      * ID로 프로젝트 단건 조회
+     * 연관 엔티티도 함께 조회하여 N+1 쿼리를 방지합니다.
      *
      * @param id 조회할 프로젝트 ID
      * @return 프로젝트 정보 (Optional)
      */
     public Optional<ProjectResponse> getProjectById(UUID id) {
-        return projectRepository.findById(id)
+        return projectRepository.findByIdWithDetails(id)
                 .map(this::convertToResponse);
     }
 
@@ -159,12 +162,8 @@ public class ProjectService {
         project.setOrder(request.getOrder() != null ? request.getOrder() : 0);
         
         // 연관 데이터 업데이트 (Skills, Links, QnA)
-        // 기존 데이터를 모두 지우고 새로 추가하는 방식 (orphanRemoval 동작)
-        project.getSkills().clear();
-        project.getLinks().clear();
-        project.getQnaList().clear();
-        
-        updateProjectRelations(project, request);
+        // 기존 데이터와 신규 데이터를 비교하여 효율적으로 업데이트
+        updateProjectRelationsEfficiently(project, request);
         
         Project savedProject = projectRepository.save(project);
         log.info("[PROJECT] Project updated successfully - TraceId: {} - ID: {} - Title: {}",
@@ -340,5 +339,51 @@ public class ProjectService {
         response.setName(skill.getName());
         response.setCategory(skill.getCategory());
         return response;
+    }
+
+    /**
+     * 프로젝트 연관 관계 효율적 업데이트
+     * 기존 데이터와 비교하여 필요한 부분만 업데이트합니다.
+     *
+     * @param project 업데이트할 프로젝트 엔티티
+     * @param request 요청 DTO
+     */
+    private void updateProjectRelationsEfficiently(Project project, ProjectRequest request) {
+        // Skills 효율적 업데이트
+        if (request.getSkills() != null) {
+            project.getSkills().clear(); // orphanRemoval=true로 자동 삭제됨
+            request.getSkills().forEach(skillReq -> {
+                ProjectSkill skill = new ProjectSkill();
+                skill.setName(skillReq.getName());
+                skill.setCategory(skillReq.getCategory());
+                skill.setProject(project);
+                project.getSkills().add(skill);
+            });
+        }
+
+        // Links 효율적 업데이트
+        if (request.getLinks() != null) {
+            project.getLinks().clear(); // orphanRemoval=true로 자동 삭제됨
+            request.getLinks().forEach(linkReq -> {
+                ProjectLink link = new ProjectLink();
+                link.setLabel(linkReq.getLabel());
+                link.setUrl(linkReq.getUrl());
+                link.setDescription(linkReq.getDescription());
+                link.setProject(project);
+                project.getLinks().add(link);
+            });
+        }
+
+        // QnA 효율적 업데이트
+        if (request.getQnaList() != null) {
+            project.getQnaList().clear(); // orphanRemoval=true로 자동 삭제됨
+            request.getQnaList().forEach(qnaReq -> {
+                ProjectQnA qna = new ProjectQnA();
+                qna.setQuestion(qnaReq.getQuestion());
+                qna.setAnswer(qnaReq.getAnswer());
+                qna.setProject(project);
+                project.getQnaList().add(qna);
+            });
+        }
     }
 }
