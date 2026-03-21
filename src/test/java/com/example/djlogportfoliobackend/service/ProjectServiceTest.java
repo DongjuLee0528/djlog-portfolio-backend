@@ -44,7 +44,7 @@ class ProjectServiceTest {
                 ProjectStatus.PUBLISHED,
                 "Test Description",
                 "test-image.jpg",
-                "Java,Spring",
+                Arrays.asList("Java", "Spring"),
                 "2023-01-01 ~ 2023-03-01",
                 "Test Company",
                 1
@@ -57,7 +57,7 @@ class ProjectServiceTest {
         projectRequest.setStatus(ProjectStatus.DRAFT);
         projectRequest.setDescription("New Description");
         projectRequest.setImage("new-image.jpg");
-        projectRequest.setTags("Kotlin,Android");
+        projectRequest.setTags(Arrays.asList("Kotlin", "Android"));
         projectRequest.setDuration("2023-04-01 ~ 2023-06-01");
         projectRequest.setCompany("New Company");
         projectRequest.setOrder(2);
@@ -134,7 +134,19 @@ class ProjectServiceTest {
     @DisplayName("새 프로젝트 생성 성공")
     void createProject_Success() {
         // Given
-        when(projectRepository.save(any(Project.class))).thenReturn(testProject);
+        Project newProject = new Project(
+                projectRequest.getTitle(),
+                projectRequest.getCategory(),
+                projectRequest.getStatus(),
+                projectRequest.getDescription(),
+                projectRequest.getImage(),
+                projectRequest.getTags(),
+                projectRequest.getDuration(),
+                projectRequest.getCompany(),
+                projectRequest.getOrder()
+        );
+        newProject.setId(UUID.randomUUID());
+        when(projectRepository.save(any(Project.class))).thenReturn(newProject);
 
         // When
         ProjectResponse result = projectService.createProject(projectRequest);
@@ -243,7 +255,7 @@ class ProjectServiceTest {
 
         // Then
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getTags()).containsIgnoringCase(tag);
+        assertThat(result.get(0).getTags()).anyMatch(t -> t.equalsIgnoreCase(tag));
         verify(projectRepository).findByTagsContainingIgnoreCaseOrderByOrderAscTitleAsc(tag);
     }
 }
