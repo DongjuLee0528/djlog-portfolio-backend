@@ -9,7 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureWebMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -17,6 +17,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.*;
@@ -25,7 +26,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
-@AutoConfigureWebMvc
+@AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
 @DisplayName("ProjectController 통합 테스트")
@@ -52,7 +53,7 @@ class ProjectControllerIntegrationTest {
                 ProjectStatus.PUBLISHED,
                 "Test Description",
                 "test-image.jpg",
-                "Java,Spring",
+                Arrays.asList("Java", "Spring"),
                 "2023-01-01 ~ 2023-03-01",
                 "Test Company",
                 1
@@ -81,7 +82,7 @@ class ProjectControllerIntegrationTest {
                 ProjectStatus.DRAFT,
                 "Draft Description",
                 "draft-image.jpg",
-                "Kotlin,Android",
+                Arrays.asList("Kotlin", "Android"),
                 "2023-04-01 ~ 2023-06-01",
                 "Draft Company",
                 2
@@ -106,7 +107,7 @@ class ProjectControllerIntegrationTest {
                 ProjectStatus.DRAFT,
                 "Draft Description",
                 "draft-image.jpg",
-                "Kotlin,Android",
+                Arrays.asList("Kotlin", "Android"),
                 "2023-04-01 ~ 2023-06-01",
                 "Draft Company",
                 2
@@ -149,7 +150,7 @@ class ProjectControllerIntegrationTest {
         request.setStatus(ProjectStatus.DRAFT);
         request.setDescription("New Description");
         request.setImage("new-image.jpg");
-        request.setTags("Kotlin,Android");
+        request.setTags(Arrays.asList("Kotlin", "Android"));
         request.setDuration("2023-04-01 ~ 2023-06-01");
         request.setCompany("New Company");
         request.setOrder(3);
@@ -174,7 +175,7 @@ class ProjectControllerIntegrationTest {
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -187,7 +188,7 @@ class ProjectControllerIntegrationTest {
         request.setStatus(ProjectStatus.PUBLISHED);
         request.setDescription("Updated Description");
         request.setImage("updated-image.jpg");
-        request.setTags("Updated,Tags");
+        request.setTags(Arrays.asList("Updated", "Tags"));
         request.setDuration("2023-07-01 ~ 2023-09-01");
         request.setCompany("Updated Company");
         request.setOrder(5);
@@ -231,10 +232,11 @@ class ProjectControllerIntegrationTest {
                         .param("tag", "Java"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].tags", containsString("Java")));
+                .andExpect(jsonPath("$[0].tags", hasItem("Java")));
     }
 
     @Test
+    @WithMockUser(username = "admin@example.com")
     @DisplayName("잘못된 요청 파라미터 - 유효성 검증 실패")
     void createProject_ValidationFailure() throws Exception {
         ProjectRequest invalidRequest = new ProjectRequest();
