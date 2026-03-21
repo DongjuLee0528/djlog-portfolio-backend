@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.BatchSize;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -72,6 +73,7 @@ public class Project {
      * 프로젝트에서 사용된 기술 스택 목록
      */
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 10)
     private List<ProjectSkill> skills = new ArrayList<>();
 
     /**
@@ -96,12 +98,14 @@ public class Project {
      * 프로젝트 관련 링크 목록 (GitHub, 배포 URL 등)
      */
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 10)
     private List<ProjectLink> links = new ArrayList<>();
 
     /**
      * 프로젝트 관련 Q&A 목록
      */
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 10)
     private List<ProjectQnA> qnaList = new ArrayList<>();
 
     /**
