@@ -47,7 +47,9 @@ class AuthServiceTest {
     @BeforeEach
     void setUp() {
         testAdmin = new Admin("test@example.com", "encodedPassword");
-        loginRequest = new LoginRequest("test@example.com", "plainPassword");
+        loginRequest = new LoginRequest();
+        loginRequest.setEmail("test@example.com");
+        loginRequest.setPassword("plainPassword");
     }
 
     @Test
