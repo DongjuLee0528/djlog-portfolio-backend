@@ -50,10 +50,7 @@ public interface ProjectRepository extends JpaRepository<Project, UUID> {
      * @param id 프로젝트 ID
      * @return 연관 엔티티가 함께 로드된 프로젝트
      */
-    @Query("SELECT DISTINCT p FROM Project p " +
-           "LEFT JOIN FETCH p.skills " +
-           "LEFT JOIN FETCH p.links " +
-           "LEFT JOIN FETCH p.qnaList " +
+    @Query("SELECT p FROM Project p " +
            "WHERE p.id = :id")
     Optional<Project> findByIdWithDetails(@Param("id") UUID id);
 
@@ -61,10 +58,7 @@ public interface ProjectRepository extends JpaRepository<Project, UUID> {
      * 연관 엔티티를 함께 조회하는 프로젝트 전체 목록 조회 (N+1 쿼리 방지)
      * @return 연관 엔티티가 함께 로드된 프로젝트 목록
      */
-    @Query("SELECT DISTINCT p FROM Project p " +
-           "LEFT JOIN FETCH p.skills " +
-           "LEFT JOIN FETCH p.links " +
-           "LEFT JOIN FETCH p.qnaList " +
+    @Query("SELECT p FROM Project p " +
            "ORDER BY p.order ASC, p.title ASC")
     List<Project> findAllWithDetails();
 
@@ -73,10 +67,7 @@ public interface ProjectRepository extends JpaRepository<Project, UUID> {
      * @param status 프로젝트 상태
      * @return 연관 엔티티가 함께 로드된 프로젝트 목록
      */
-    @Query("SELECT DISTINCT p FROM Project p " +
-           "LEFT JOIN FETCH p.skills " +
-           "LEFT JOIN FETCH p.links " +
-           "LEFT JOIN FETCH p.qnaList " +
+    @Query("SELECT p FROM Project p " +
            "WHERE p.status = :status " +
            "ORDER BY p.order ASC, p.title ASC")
     List<Project> findByStatusWithDetails(@Param("status") ProjectStatus status);
