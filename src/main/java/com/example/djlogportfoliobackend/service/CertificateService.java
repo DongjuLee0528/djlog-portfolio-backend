@@ -54,7 +54,7 @@ public class CertificateService {
         Certificate certificate = new Certificate(
                 request.getName(),
                 request.getIssuer(),
-                request.getIssueDate(),
+                request.parseIssueDate(),
                 request.getCredentialId(),
                 profile
         );
@@ -78,7 +78,7 @@ public class CertificateService {
 
         certificate.setName(request.getName());
         certificate.setIssuer(request.getIssuer());
-        certificate.setIssueDate(request.getIssueDate());
+        certificate.setIssueDate(request.parseIssueDate());
         certificate.setCredentialId(request.getCredentialId());
 
         return toResponse(certificate);
