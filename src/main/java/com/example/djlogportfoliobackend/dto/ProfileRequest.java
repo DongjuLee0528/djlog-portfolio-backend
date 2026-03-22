@@ -1,5 +1,6 @@
 package com.example.djlogportfoliobackend.dto;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
@@ -77,7 +78,21 @@ public class ProfileRequest {
      * <p>보유하고 있는 기술 스택들의 목록입니다.
      * About 페이지나 Skills 섹션에서 표시됩니다.</p>
      */
+    @Valid
     private List<SkillRequest> skills;
+
+    /**
+     * 학력 목록 (프론트 payload 필드명: education)
+     * <p>프론트엔드의 profileFormData와 동일한 필드명을 유지합니다.</p>
+     */
+    @Valid
+    private List<EducationRequest> education;
+
+    /**
+     * 자격증 목록 (프론트 payload 필드명: certificates)
+     */
+    @Valid
+    private List<CertificateRequest> certificates;
 
     /**
      * 이력서 파일 URL (선택)
