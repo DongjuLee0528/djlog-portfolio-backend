@@ -79,4 +79,14 @@ public class ProfileResponse {
      * 보유 기술 스택 목록
      */
     private List<SkillResponse> skills;
+
+    /**
+     * 학력 목록 (프론트 응답 필드명: education)
+     */
+    private List<EducationResponse> education;
+
+    /**
+     * 자격증 목록
+     */
+    private List<CertificateResponse> certificates;
 }
