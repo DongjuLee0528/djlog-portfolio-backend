@@ -98,6 +98,12 @@ public class Profile {
     private List<Certificate> certificates = new ArrayList<>();
 
     /**
+     * 성과/경험 목록
+     */
+    @OneToMany(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Achievement> achievements = new ArrayList<>();
+
+    /**
      * 프로필 생성자
      * @param name 이름
      * @param bio 간단한 자기소개
