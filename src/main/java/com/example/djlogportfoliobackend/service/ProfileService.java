@@ -1,9 +1,15 @@
 package com.example.djlogportfoliobackend.service;
 
+import com.example.djlogportfoliobackend.dto.CertificateRequest;
+import com.example.djlogportfoliobackend.dto.CertificateResponse;
+import com.example.djlogportfoliobackend.dto.EducationRequest;
+import com.example.djlogportfoliobackend.dto.EducationResponse;
 import com.example.djlogportfoliobackend.dto.ProfileRequest;
 import com.example.djlogportfoliobackend.dto.ProfileResponse;
 import com.example.djlogportfoliobackend.dto.SkillRequest;
 import com.example.djlogportfoliobackend.dto.SkillResponse;
+import com.example.djlogportfoliobackend.entity.Certificate;
+import com.example.djlogportfoliobackend.entity.Education;
 import com.example.djlogportfoliobackend.entity.Profile;
 import com.example.djlogportfoliobackend.entity.Skill;
 import com.example.djlogportfoliobackend.repository.ProfileRepository;
@@ -11,8 +17,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -73,17 +77,11 @@ public class ProfileService {
             profile.setEmail(request.getEmail());
             profile.setGithub(request.getGithub());
             profile.setResume(request.getResume());
-
-            // Clear existing skills and add new ones
-            profile.getSkills().clear();
-            if (request.getSkills() != null) {
-                for (SkillRequest skillRequest : request.getSkills()) {
-                    Skill skill = new Skill(skillRequest.getName(), skillRequest.getCategory(),
-                                          skillRequest.getProficiency(), profile);
-                    profile.getSkills().add(skill);
-                }
-            }
         }
+
+        replaceSkills(profile, request);
+        replaceEducations(profile, request);
+        replaceCertificates(profile, request);
 
         Profile savedProfile = profileRepository.save(profile);
         return convertToResponse(savedProfile);
@@ -123,14 +121,9 @@ public class ProfileService {
         profile.setJob(request.getJob());
         profile.setResume(request.getResume());
 
-        // Add skills
-        if (request.getSkills() != null) {
-            for (SkillRequest skillRequest : request.getSkills()) {
-                Skill skill = new Skill(skillRequest.getName(), skillRequest.getCategory(),
-                                      skillRequest.getProficiency(), profile);
-                profile.getSkills().add(skill);
-            }
-        }
+        replaceSkills(profile, request);
+        replaceEducations(profile, request);
+        replaceCertificates(profile, request);
 
         return profile;
     }
@@ -161,7 +154,72 @@ public class ProfileService {
                     .collect(Collectors.toList()));
         }
 
+        if (profile.getEducations() != null) {
+            response.setEducation(profile.getEducations().stream()
+                    .map(this::convertToEducationResponse)
+                    .collect(Collectors.toList()));
+        }
+
+        if (profile.getCertificates() != null) {
+            response.setCertificates(profile.getCertificates().stream()
+                    .map(this::convertToCertificateResponse)
+                    .collect(Collectors.toList()));
+        }
+
         return response;
+    }
+
+    private void replaceSkills(Profile profile, ProfileRequest request) {
+        profile.getSkills().clear();
+        if (request.getSkills() == null) {
+            return;
+        }
+
+        for (SkillRequest skillRequest : request.getSkills()) {
+            Skill skill = new Skill(
+                    skillRequest.getName(),
+                    skillRequest.getCategory(),
+                    skillRequest.getProficiency(),
+                    profile
+            );
+            profile.getSkills().add(skill);
+        }
+    }
+
+    private void replaceEducations(Profile profile, ProfileRequest request) {
+        profile.getEducations().clear();
+        if (request.getEducation() == null) {
+            return;
+        }
+
+        for (EducationRequest educationRequest : request.getEducation()) {
+            Education education = new Education(
+                    educationRequest.getSchool(),
+                    educationRequest.getMajor(),
+                    educationRequest.getPeriod(),
+                    educationRequest.getDegree(),
+                    profile
+            );
+            profile.getEducations().add(education);
+        }
+    }
+
+    private void replaceCertificates(Profile profile, ProfileRequest request) {
+        profile.getCertificates().clear();
+        if (request.getCertificates() == null) {
+            return;
+        }
+
+        for (CertificateRequest certificateRequest : request.getCertificates()) {
+            Certificate certificate = new Certificate(
+                    certificateRequest.getName(),
+                    certificateRequest.getIssuer(),
+                    certificateRequest.getIssueDate(),
+                    certificateRequest.getCredentialId(),
+                    profile
+            );
+            profile.getCertificates().add(certificate);
+        }
     }
 
     /**
@@ -172,5 +230,13 @@ public class ProfileService {
      */
     private SkillResponse convertToSkillResponse(Skill skill) {
         return new SkillResponse(skill);
+    }
+
+    private EducationResponse convertToEducationResponse(Education education) {
+        return new EducationResponse(education);
+    }
+
+    private CertificateResponse convertToCertificateResponse(Certificate certificate) {
+        return new CertificateResponse(certificate);
     }
 }
