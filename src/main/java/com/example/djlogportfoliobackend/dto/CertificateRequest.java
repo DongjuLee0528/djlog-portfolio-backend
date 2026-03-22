@@ -4,6 +4,9 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
 /**
  * 자격증 정보 등록/수정 요청 DTO
@@ -16,7 +19,30 @@ public class CertificateRequest {
 
     private String issuer;
 
-    private LocalDate issueDate;
+    private String issueDate;
 
     private String credentialId;
+
+    public LocalDate parseIssueDate() {
+        if (issueDate == null || issueDate.isBlank()) {
+            return null;
+        }
+
+        String normalized = issueDate.trim();
+
+        try {
+            return LocalDate.parse(normalized);
+        } catch (DateTimeParseException ignored) {
+            // Fall through to year-month parsing.
+        }
+
+        try {
+            return YearMonth.parse(
+                    normalized.replace('.', '-'),
+                    DateTimeFormatter.ofPattern("yyyy-MM")
+            ).atDay(1);
+        } catch (DateTimeParseException ignored) {
+            return null;
+        }
+    }
 }
