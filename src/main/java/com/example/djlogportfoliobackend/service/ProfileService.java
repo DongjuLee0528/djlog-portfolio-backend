@@ -1,5 +1,7 @@
 package com.example.djlogportfoliobackend.service;
 
+import com.example.djlogportfoliobackend.dto.AchievementRequest;
+import com.example.djlogportfoliobackend.dto.AchievementResponse;
 import com.example.djlogportfoliobackend.dto.CertificateRequest;
 import com.example.djlogportfoliobackend.dto.CertificateResponse;
 import com.example.djlogportfoliobackend.dto.EducationRequest;
@@ -8,6 +10,7 @@ import com.example.djlogportfoliobackend.dto.ProfileRequest;
 import com.example.djlogportfoliobackend.dto.ProfileResponse;
 import com.example.djlogportfoliobackend.dto.SkillRequest;
 import com.example.djlogportfoliobackend.dto.SkillResponse;
+import com.example.djlogportfoliobackend.entity.Achievement;
 import com.example.djlogportfoliobackend.entity.Certificate;
 import com.example.djlogportfoliobackend.entity.Education;
 import com.example.djlogportfoliobackend.entity.Profile;
@@ -17,6 +20,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -35,6 +42,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class ProfileService {
+
+    private static final Pattern YEAR_PATTERN = Pattern.compile("(19|20)\\d{2}");
 
     private final ProfileRepository profileRepository;
 
@@ -82,6 +91,7 @@ public class ProfileService {
         replaceSkills(profile, request);
         replaceEducations(profile, request);
         replaceCertificates(profile, request);
+        replaceAchievements(profile, request);
 
         Profile savedProfile = profileRepository.save(profile);
         return convertToResponse(savedProfile);
@@ -124,6 +134,7 @@ public class ProfileService {
         replaceSkills(profile, request);
         replaceEducations(profile, request);
         replaceCertificates(profile, request);
+        replaceAchievements(profile, request);
 
         return profile;
     }
@@ -161,9 +172,25 @@ public class ProfileService {
         }
 
         if (profile.getCertificates() != null) {
-            response.setCertificates(profile.getCertificates().stream()
+            List<CertificateResponse> certificates = profile.getCertificates().stream()
+                    .sorted(Comparator.comparing(
+                            Certificate::getIssueDate,
+                            Comparator.nullsLast(Comparator.reverseOrder())
+                    ))
                     .map(this::convertToCertificateResponse)
-                    .collect(Collectors.toList()));
+                    .toList();
+            response.setCertificates(certificates);
+        }
+
+        if (profile.getAchievements() != null) {
+            List<AchievementResponse> achievements = profile.getAchievements().stream()
+                    .sorted(Comparator.comparing(
+                            achievement -> extractLatestYear(achievement.getPeriod()),
+                            Comparator.nullsLast(Comparator.reverseOrder())
+                    ))
+                    .map(this::convertToAchievementResponse)
+                    .toList();
+            response.setAchievements(achievements);
         }
 
         return response;
@@ -214,11 +241,30 @@ public class ProfileService {
             Certificate certificate = new Certificate(
                     certificateRequest.getName(),
                     certificateRequest.getIssuer(),
-                    certificateRequest.getIssueDate(),
+                    certificateRequest.parseIssueDate(),
                     certificateRequest.getCredentialId(),
                     profile
             );
             profile.getCertificates().add(certificate);
+        }
+    }
+
+    private void replaceAchievements(Profile profile, ProfileRequest request) {
+        profile.getAchievements().clear();
+        if (request.getAchievements() == null) {
+            return;
+        }
+
+        for (AchievementRequest achievementRequest : request.getAchievements()) {
+            Achievement achievement = new Achievement(
+                    achievementRequest.getTitle(),
+                    achievementRequest.getOrganization(),
+                    achievementRequest.getDescription(),
+                    achievementRequest.getPeriod(),
+                    achievementRequest.getCategory(),
+                    profile
+            );
+            profile.getAchievements().add(achievement);
         }
     }
 
@@ -238,5 +284,26 @@ public class ProfileService {
 
     private CertificateResponse convertToCertificateResponse(Certificate certificate) {
         return new CertificateResponse(certificate);
+    }
+
+    private AchievementResponse convertToAchievementResponse(Achievement achievement) {
+        return new AchievementResponse(achievement);
+    }
+
+    private Integer extractLatestYear(String period) {
+        if (period == null || period.isBlank()) {
+            return null;
+        }
+
+        Matcher matcher = YEAR_PATTERN.matcher(period);
+        Integer latestYear = null;
+        while (matcher.find()) {
+            int year = Integer.parseInt(matcher.group());
+            if (latestYear == null || year > latestYear) {
+                latestYear = year;
+            }
+        }
+
+        return latestYear;
     }
 }
