@@ -95,6 +95,12 @@ public class ProfileRequest {
     private List<CertificateRequest> certificates;
 
     /**
+     * 성과/경험 목록
+     */
+    @Valid
+    private List<AchievementRequest> achievements;
+
+    /**
      * 이력서 파일 URL (선택)
      * <p>이력서 PDF 파일의 URL입니다.
      * 파일 업로드를 통해 저장된 이력서 링크입니다.</p>
