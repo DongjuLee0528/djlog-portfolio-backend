@@ -1,217 +1,303 @@
-# Portfolio Backend
+# djlog-portfolio-backend
 
-개인 포트폴리오 웹사이트(Backend) API 서버입니다.
-프로젝트 관리, 프로필 정보, 파일 업로드, 관리자 인증 기능을 제공합니다.
+개인 포트폴리오 사이트를 위한 Spring Boot 백엔드입니다.
 
-## Tech Stack
-- **Framework**: Spring Boot 3.3.6
-- **Language**: Java 17
-- **Database**: MySQL + Spring Data JPA
-- **Authentication**: JWT + Spring Security
-- **Cache**: Redis (세션 관리, JWT 블랙리스트)
-- **Build Tool**: Gradle
-- **Validation**: Jakarta Validation
-- **Security**:
-  - JWT 토큰 블랙리스트
-  - 타이밍 공격 방지
-  - 파일 업로드 보안 (MIME 타입, 매직넘버 검증)
-  - CORS 정책
-- **Logging**: Logback + Logstash Encoder
-- **Environment**: Profile 기반 환경 분리 (dev/prod)
+이 프로젝트는 공개 포트폴리오 데이터를 조회하는 API와, 관리자 권한으로 포트폴리오 내용을 수정하는 API를 함께 제공합니다. 프로젝트, 프로필, 학력, 자격증, 기술 스택, 성과/경험, 파일 업로드, 관리자 인증을 하나의 애플리케이션에서 관리합니다.
 
-## Features
-- **인증/인가**
-  - JWT 기반 관리자 로그인/로그아웃
-  - 토큰 블랙리스트 관리
-  - 세션 관리 (Redis)
-  - 타이밍 공격 방지
+## 프로젝트 성격
 
-- **프로젝트 관리**
-  - 프로젝트 CRUD 작업
-  - 카테고리/태그별 필터링
-  - 게시 상태 관리 (published/draft)
-  - 프로젝트 링크 및 Q&A 관리
+이 백엔드는 단순한 CRUD 서버라기보다 단일 사용자 포트폴리오를 운영하기 위한 관리용 API 서버에 가깝습니다.
 
-- **프로필 관리**
-  - 개인 프로필 정보 조회/수정
-  - 학력 정보 CRUD
-  - 자격증 정보 CRUD
-  - 기술/스킬 정보 CRUD
+- 공개 사용자는 프로젝트, 프로필, 학력, 자격증, 기술 스택을 조회할 수 있습니다.
+- 관리자는 JWT 인증 후 포트폴리오 데이터를 생성, 수정, 삭제할 수 있습니다.
+- 프로필은 단일 문서처럼 동작하며 `skills`, `education`, `certificates`, `achievements`를 한 번에 교체 저장합니다.
+- 프로젝트는 링크, 기술 스택, Q&A, 태그, 게시 상태를 포함한 구조로 관리됩니다.
 
-- **파일 업로드**
-  - 이미지 파일 업로드
-  - MIME 타입 및 매직넘버 검증
-  - 파일 크기 제한
-  - 경로 순회 공격 방지
+## 주요 기능
 
-- **보안 기능**
-  - 글로벌 예외 처리
-  - 보안 헤더 설정
-  - 환경별 설정 분리
-  - 상세한 보안 로깅
+### 1. 관리자 인증
 
-## API Endpoints
+- `POST /api/auth/login`으로 로그인
+- `POST /api/auth/logout`으로 로그아웃
+- JWT 기반 인증
+- Redis 기반 JWT 블랙리스트 및 세션 관리
+- 동시 로그인 제한과 로그인 이력 관리
 
-### 인증 (Authentication)
-```
-POST /api/auth/login    # 관리자 로그인
-POST /api/auth/logout   # 관리자 로그아웃 (JWT 토큰 무효화)
-```
+### 2. 프로필 관리
 
-### 프로젝트 (Projects)
-```
-GET    /api/projects              # 프로젝트 목록 조회 (필터링 지원)
-GET    /api/projects/{id}         # 특정 프로젝트 상세 조회
-POST   /api/projects              # 새 프로젝트 생성 (인증 필요)
-PUT    /api/projects/{id}         # 프로젝트 수정 (인증 필요)
-DELETE /api/projects/{id}         # 프로젝트 삭제 (인증 필요)
-```
+- `GET /api/profile`
+- `PUT /api/profile`
+- 이름, 직무, 소개, 이메일, GitHub, 이력서 URL 관리
+- 기술 스택, 학력, 자격증, 성과/경험을 포함한 전체 프로필 갱신
+- 자격증 날짜는 `"2025.05"`, `"2025-05"`, `"2025-05-01"` 형식을 받아 내부적으로 `LocalDate`로 저장
 
-### 프로필 (Profile)
-```
-GET /api/profile                  # 프로필 정보 조회
-PUT /api/profile                  # 프로필 정보 수정 (인증 필요)
-```
+### 3. 프로젝트 관리
 
-### 파일 업로드 (File Upload)
-```
-POST /api/upload                  # 파일 업로드 (인증 필요)
-```
+- 프로젝트 목록 조회, 단건 조회, 생성, 수정, 삭제
+- 게시 상태(`PUBLISHED`, `DRAFT`) 기반 노출 제어
+- 카테고리/태그 필터링
+- 프로젝트 이미지 업로드
+- 프로젝트별 Q&A 목록 조회 및 표시 순서 일괄 수정
 
-### 학력 (Education)
-```
-GET    /api/educations            # 학력 목록 조회
-POST   /api/educations            # 새 학력 추가 (인증 필요)
-PUT    /api/educations/{id}       # 학력 수정 (인증 필요)
-DELETE /api/educations/{id}       # 학력 삭제 (인증 필요)
-```
+### 4. 개별 이력 데이터 관리
 
-### 자격증 (Certificate)
-```
-GET    /api/certificates          # 자격증 목록 조회
-POST   /api/certificates          # 새 자격증 추가 (인증 필요)
-PUT    /api/certificates/{id}     # 자격증 수정 (인증 필요)
-DELETE /api/certificates/{id}     # 자격증 삭제 (인증 필요)
+- `Education`, `Certificate`, `Skill` 각각 별도 CRUD API 제공
+- 프로필 일괄 수정 경로와 개별 관리 경로를 함께 유지
+
+### 5. 파일 업로드
+
+- 이미지 업로드 API 제공
+- 확장자, MIME 타입, 파일 크기, 매직 넘버 검증
+- UUID 파일명 저장
+- `/uploads/**` 경로로 정적 접근 허용
+
+### 6. 보안 및 운영 기능
+
+- Spring Security 기반 엔드포인트 접근 제어
+- CORS 설정
+- Rate limiting 필터
+- 보안 헤더 필터
+- 전역 예외 처리
+- 환경별 설정 분리 (`dev`, `prod`, `test`)
+
+## 기술 스택
+
+- Java 17
+- Spring Boot 3.3.6
+- Spring Web
+- Spring Data JPA
+- Spring Security
+- Spring Validation
+- Spring Data Redis
+- MySQL
+- H2 (테스트)
+- JWT (`jjwt`)
+- Lombok
+- Gradle
+- Logback + logstash-logback-encoder
+- Caffeine
+
+## API 개요
+
+### 인증
+
+```text
+POST /api/auth/login
+POST /api/auth/logout
 ```
 
-### 기술/스킬 (Skills)
-```
-GET    /api/skills                # 기술/스킬 목록 조회
-POST   /api/skills                # 새 기술/스킬 추가 (인증 필요)
-PUT    /api/skills/{id}           # 기술/스킬 수정 (인증 필요)
-DELETE /api/skills/{id}           # 기술/스킬 삭제 (인증 필요)
-```
+### 프로필
 
-## Project Structure
-```
-src/
-  main/
-    java/com/example/djlogportfoliobackend/
-      config/           # 설정 클래스 (Security, Environment, DataLoader, Rate Limit 등)
-      controller/       # REST API 컨트롤러 (Auth, Project, Profile, File, Education, Certificate, Skill)
-      dto/             # 데이터 전송 객체 (Request/Response DTOs)
-      entity/          # JPA 엔티티 (Admin, Project, Profile, Education, Certificate, Skill 등)
-      exception/       # 커스텀 예외 및 글로벌 예외 처리
-      filter/          # JWT 인증 필터, 요청 로깅 필터, Rate Limit 필터
-      repository/      # JPA 리포지토리
-      service/         # 비즈니스 로직 서비스 (JWT 블랙리스트, 세션 관리, 파일 업로드 등)
-      util/           # 유틸리티 클래스 (JWT 등)
-    resources/
-      application.properties           # 기본 설정
-      application-dev.properties       # 개발 환경 설정
-      application-prod.properties      # 운영 환경 설정
-  test/
-    java/           # 단위 테스트
-    resources/      # 테스트 리소스
+```text
+GET /api/profile
+PUT /api/profile
 ```
 
-## Security Features
-- **JWT 토큰 관리**: Redis 기반 블랙리스트로 로그아웃 시 토큰 무효화
-- **세션 관리**: 동시 로그인 제한 및 세션 추적
-- **파일 업로드 보안**: MIME 타입, 매직넘버, 파일 크기 검증
-- **타이밍 공격 방지**: 사용자 존재 여부와 관계없이 동일한 처리 시간 보장
-- **CORS 정책**: 환경별 허용 도메인 설정
-- **보안 헤더**: X-Content-Type-Options, X-Frame-Options, CSP 등
-- **상세한 로깅**: 보안 이벤트 및 에러 추적
+### 프로젝트
 
-## Environment Configuration
-- **개발환경 (dev)**: 상세한 로깅, SQL 쿼리 로깅 활성화
-- **운영환경 (prod)**: 최적화된 로깅, 보안 강화 설정
-- **프로필별 설정**: 데이터베이스, Redis, CORS 등 환경별 분리
-
-## Getting Started
-
-### Prerequisites
-- Java 17+
-- MySQL 8.0+
-- Redis 6.0+
-- Gradle 7.0+
-
-### Installation
-1. 저장소 클론
-```bash
-git clone <repository-url>
-cd djlog-portfolio-backend
+```text
+GET    /api/projects
+GET    /api/projects/{id}
+GET    /api/projects/{projectId}/qna
+POST   /api/projects
+PUT    /api/projects/{id}
+PUT    /api/projects/{projectId}/qna/display-order
+DELETE /api/projects/{id}
+POST   /api/projects/image
 ```
 
-2. 환경 변수 설정 (.env 파일 생성)
+### 학력
+
+```text
+GET    /api/educations
+POST   /api/educations
+PUT    /api/educations/{id}
+DELETE /api/educations/{id}
 ```
-# 데이터베이스 설정
+
+### 자격증
+
+```text
+GET    /api/certificates
+POST   /api/certificates
+PUT    /api/certificates/{id}
+DELETE /api/certificates/{id}
+```
+
+### 기술 스택
+
+```text
+GET    /api/skills
+POST   /api/skills
+PUT    /api/skills/{id}
+DELETE /api/skills/{id}
+```
+
+### 파일 업로드
+
+```text
+POST /api/upload
+```
+
+## 접근 정책
+
+현재 보안 설정 기준으로 아래 정책을 가집니다.
+
+- `GET /api/profile` 공개
+- `GET /api/projects/**` 공개
+- `GET /api/educations/**` 공개
+- `GET /api/certificates/**` 공개
+- `GET /api/skills/**` 공개
+- `/uploads/**` 공개
+- 그 외 생성, 수정, 삭제 요청은 인증 필요
+
+## 도메인 구조
+
+핵심 엔티티는 다음과 같습니다.
+
+- `Profile`: 단일 포트폴리오 소유자의 기본 정보
+- `Skill`: 프로필에 연결된 기술 스택
+- `Education`: 프로필에 연결된 학력
+- `Certificate`: 프로필에 연결된 자격증
+- `Achievement`: 프로필에 연결된 성과/경험
+- `Project`: 포트폴리오 프로젝트
+- `ProjectSkill`: 프로젝트 기술 항목
+- `ProjectLink`: 프로젝트 외부 링크
+- `ProjectQnA`: 프로젝트 상세 설명용 질문/답변
+- `Admin`: 관리자 계정
+
+## 현재 코드 기준 특징
+
+### 단일 프로필 모델
+
+프로필은 여러 명의 사용자를 위한 구조가 아니라, 하나의 포트폴리오 운영자를 위한 구조입니다.
+
+- 애플리케이션 시작 시 기본 프로필이 없으면 생성합니다.
+- 프로필이 여러 개 생기면 경고 로그를 남기지만, 서비스 로직은 첫 번째 프로필을 기준으로 동작합니다.
+
+### 자격증 날짜 처리
+
+현재 `CertificateRequest.issueDate`는 문자열로 입력을 받고, 저장 직전에 파싱합니다.
+
+- `"2025.05"` -> `2025-05-01`
+- `"2025-05"` -> `2025-05-01`
+- `"2025-05-01"` -> 그대로 유지
+
+응답에서는 다시 `LocalDate` 기반 JSON 날짜 문자열로 내려가며, 프로필 응답의 자격증 목록은 최신순으로 정렬됩니다.
+
+## 디렉터리 구조
+
+```text
+src
+├── main
+│   ├── java/com/example/djlogportfoliobackend
+│   │   ├── config
+│   │   ├── controller
+│   │   ├── dto
+│   │   ├── entity
+│   │   ├── exception
+│   │   ├── filter
+│   │   ├── repository
+│   │   ├── service
+│   │   └── util
+│   └── resources
+│       ├── application.properties
+│       ├── application-dev.properties
+│       └── application-prod.properties
+└── test
+    ├── java
+    │   ├── filter
+    │   ├── integration
+    │   └── service
+    └── resources
+```
+
+## 실행 전 준비물
+
+- Java 17
+- MySQL
+- Redis
+
+개발 환경에서도 Redis 연결 설정이 필요합니다. 테스트는 H2를 사용합니다.
+
+## 환경 변수
+
+최소한 아래 값은 준비하는 것이 좋습니다.
+
+```env
+SPRING_PROFILES_ACTIVE=dev
+
+JWT_SECRET=replace-with-a-secure-secret
+JWT_EXPIRATION=86400000
+
 DB_URL=jdbc:mysql://localhost:3306/portfolio
-DB_USERNAME=your_username
-DB_PASSWORD=your_password
+DB_USERNAME=root
+DB_PASSWORD=password
 
-# JWT 토큰 설정
-JWT_SECRET=your_jwt_secret_key_at_least_32_characters_long
-
-# Redis 설정
 REDIS_HOST=localhost
 REDIS_PORT=6379
-REDIS_PASSWORD=your_redis_password
+REDIS_PASSWORD=
 REDIS_DATABASE=0
 
-# 관리자 계정 설정 (초기 관리자 생성용)
 ADMIN_USERNAME=admin@example.com
-ADMIN_PASSWORD=your_admin_password
+ADMIN_PASSWORD=change-me
 
-# 보안 설정
-CORS_ALLOWED_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
+CORS_ALLOWED_ORIGINS=http://localhost:3000
 RATE_LIMIT_RPM=60
 
-# 파일 업로드 설정
-FILE_UPLOAD_DIR=uploads
-
-# Spring 프로파일 설정
-SPRING_PROFILES_ACTIVE=dev
+FILE_UPLOAD_DIR=uploads-dev
 ```
 
-3. 데이터베이스 스키마 생성
-```sql
-CREATE DATABASE portfolio CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
+## 로컬 실행
 
-4. 빌드 및 실행
 ```bash
-# 개발 환경
 ./gradlew bootRun --args='--spring.profiles.active=dev'
+```
 
-# 운영 환경
+운영 설정으로 실행하려면:
+
+```bash
 ./gradlew bootRun --args='--spring.profiles.active=prod'
 ```
 
-### API Testing
-- Base URL: `http://localhost:8080`
-- Swagger UI: `http://localhost:8080/swagger-ui.html` (개발 환경)
-- API 테스트: Postman 등의 도구를 사용하여 각 엔드포인트 테스트
+## 빌드와 테스트
 
-## Build & Deploy
 ```bash
-# JAR 빌드
 ./gradlew build
-
-# 테스트 실행
 ./gradlew test
-
-# 도커 이미지 빌드 (Dockerfile 있는 경우)
-docker build -t portfolio-backend .
 ```
+
+프로필 통합 테스트만 실행하려면:
+
+```bash
+./gradlew test --tests com.example.djlogportfoliobackend.integration.ProfileControllerIntegrationTest
+```
+
+## 테스트 구성
+
+현재 테스트는 다음 범위를 포함합니다.
+
+- `ProfileControllerIntegrationTest`
+  프로필 저장, 하위 컬렉션 교체, 자격증 날짜 변환, 정렬 검증
+- `ProjectControllerIntegrationTest`
+  프로젝트 API 통합 검증
+- `AuthServiceTest`
+  인증 로직 검증
+- `ProjectServiceTest`
+  프로젝트 서비스 검증
+- `SecurityServiceTest`
+  보안 관련 서비스 검증
+- `RateLimitFilterTest`
+  요청 제한 필터 검증
+
+## 운영 시 참고 사항
+
+- `prod` 프로필에서는 `spring.jpa.hibernate.ddl-auto=validate`입니다.
+- 기본 프로필은 자동 생성될 수 있습니다.
+- 관리자 계정도 시작 시 없으면 자동 생성됩니다.
+- 업로드 경로는 운영에서 기본적으로 `/var/app/uploads`를 사용합니다.
+- 공개 조회 API와 관리자 수정 API가 한 애플리케이션 안에 함께 들어 있으므로, CORS와 JWT 설정을 배포 환경에 맞게 조정해야 합니다.
+
+## 한 줄 요약
+
+이 프로젝트는 개인 포트폴리오 사이트의 공개 조회 API와 관리자용 콘텐츠 관리 API를 함께 제공하는 Spring Boot 백엔드입니다.
