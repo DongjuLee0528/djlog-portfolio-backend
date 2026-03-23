@@ -63,7 +63,9 @@ public class FileUploadController {
                     clientIp, file.getOriginalFilename(), file.getSize());
 
             String imageUrl = fileUploadService.uploadFile(file);
+            response.put("image", imageUrl);
             response.put("url", imageUrl);
+            response.put("path", imageUrl);
 
             // 보안 헤더 추가
             HttpHeaders headers = new HttpHeaders();
