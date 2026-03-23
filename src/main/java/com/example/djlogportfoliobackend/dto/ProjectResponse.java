@@ -1,5 +1,6 @@
 package com.example.djlogportfoliobackend.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.example.djlogportfoliobackend.entity.ProjectStatus;
 import lombok.Data;
 
@@ -101,4 +102,14 @@ public class ProjectResponse {
      * 프로젝트 Q&A 목록
      */
     private List<ProjectQnAResponse> qnaList;
+
+    @JsonProperty("qna")
+    public List<ProjectQnAResponse> getQna() {
+        return qnaList;
+    }
+
+    @JsonProperty("qna")
+    public void setQna(List<ProjectQnAResponse> qna) {
+        this.qnaList = qna;
+    }
 }
