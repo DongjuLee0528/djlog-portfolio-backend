@@ -55,6 +55,10 @@ public class SecurityService {
      * @return 실제 적용할 프로젝트 상태
      */
     public String validateProjectStatusAccess(String requestedStatus) {
+        if (requestedStatus == null || requestedStatus.trim().isEmpty()) {
+            return isAuthenticated() ? "all" : "published";
+        }
+
         // 비인증 사용자가 'all'을 요청하면 강제로 'published'로 변경
         if ("all".equalsIgnoreCase(requestedStatus) && !isAuthenticated()) {
             return "published";
