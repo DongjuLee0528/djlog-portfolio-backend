@@ -41,6 +41,10 @@ public class ProjectQnA {
     @NotBlank(message = "답변은 필수입니다")
     private String answer;
 
+    /** 관리자 화면에서 사용하는 Q&A 표시 순서 */
+    @Column(name = "display_order", nullable = false)
+    private Integer displayOrder = 0;
+
     /**
      * ProjectQnA 생성자
      * @param project Q&A가 속할 프로젝트
@@ -51,5 +55,6 @@ public class ProjectQnA {
         this.project = project;
         this.question = question;
         this.answer = answer;
+        this.displayOrder = 0;
     }
 }
