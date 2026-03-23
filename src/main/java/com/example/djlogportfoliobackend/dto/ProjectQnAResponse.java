@@ -22,4 +22,7 @@ public class ProjectQnAResponse {
 
     /** 질문에 대한 답변 내용 */
     private String answer;
+
+    /** 관리자 화면에서 사용하는 표시 순서 */
+    private Integer displayOrder;
 }
