@@ -1,5 +1,6 @@
 package com.example.djlogportfoliobackend.dto;
 
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
@@ -31,4 +32,10 @@ public class ProjectQnARequest {
      */
     @NotBlank(message = "답변은 필수입니다")
     private String answer;
+
+    /**
+     * 관리자 화면에서 사용하는 표시 순서
+     */
+    @Min(value = 0, message = "displayOrder는 0 이상이어야 합니다")
+    private Integer displayOrder;
 }
