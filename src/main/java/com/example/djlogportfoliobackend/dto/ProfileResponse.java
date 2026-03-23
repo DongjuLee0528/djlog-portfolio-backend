@@ -89,4 +89,9 @@ public class ProfileResponse {
      * 자격증 목록
      */
     private List<CertificateResponse> certificates;
+
+    /**
+     * 성과/경험 목록
+     */
+    private List<AchievementResponse> achievements;
 }
