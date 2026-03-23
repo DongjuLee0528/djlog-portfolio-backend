@@ -1,10 +1,15 @@
 package com.example.djlogportfoliobackend.service;
 
+import com.example.djlogportfoliobackend.dto.ProjectQnAOrderBulkUpdateRequest;
+import com.example.djlogportfoliobackend.dto.ProjectQnAOrderUpdateRequest;
+import com.example.djlogportfoliobackend.dto.ProjectQnARequest;
 import com.example.djlogportfoliobackend.dto.ProjectRequest;
 import com.example.djlogportfoliobackend.dto.ProjectResponse;
 import com.example.djlogportfoliobackend.entity.Project;
+import com.example.djlogportfoliobackend.entity.ProjectQnA;
 import com.example.djlogportfoliobackend.entity.ProjectStatus;
 import com.example.djlogportfoliobackend.exception.ResourceNotFoundException;
+import com.example.djlogportfoliobackend.repository.ProjectQnARepository;
 import com.example.djlogportfoliobackend.repository.ProjectRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -29,6 +34,9 @@ class ProjectServiceTest {
 
     @Mock
     private ProjectRepository projectRepository;
+
+    @Mock
+    private ProjectQnARepository projectQnARepository;
 
     @InjectMocks
     private ProjectService projectService;
@@ -148,6 +156,12 @@ class ProjectServiceTest {
         newProject.setId(UUID.randomUUID());
         when(projectRepository.save(any(Project.class))).thenReturn(newProject);
 
+        ProjectQnARequest qnaRequest = new ProjectQnARequest();
+        qnaRequest.setQuestion("질문");
+        qnaRequest.setAnswer("답변");
+        qnaRequest.setDisplayOrder(7);
+        projectRequest.setQnaList(List.of(qnaRequest));
+
         // When
         ProjectResponse result = projectService.createProject(projectRequest);
 
@@ -155,7 +169,10 @@ class ProjectServiceTest {
         assertThat(result).isNotNull();
         assertThat(result.getTitle()).isEqualTo(projectRequest.getTitle());
         assertThat(result.getCategory()).isEqualTo(projectRequest.getCategory());
-        verify(projectRepository).save(any(Project.class));
+        verify(projectRepository).save(argThat(project ->
+                project.getQnaList().size() == 1
+                        && project.getQnaList().get(0).getDisplayOrder().equals(7)
+        ));
     }
 
     @Test
@@ -257,5 +274,75 @@ class ProjectServiceTest {
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getTags()).anyMatch(t -> t.equalsIgnoreCase(tag));
         verify(projectRepository).findByTagsContainingIgnoreCaseOrderByOrderAscTitleAsc(tag);
+    }
+
+    @Test
+    @DisplayName("프로젝트 Q&A 목록 조회 성공 - displayOrder 순 정렬")
+    void getProjectQnAs_Success() {
+        // Given
+        UUID projectId = testProject.getId();
+        ProjectQnA second = createQnA(projectId, "두 번째 질문", "답변2", 1);
+        ProjectQnA first = createQnA(projectId, "첫 번째 질문", "답변1", 0);
+
+        when(projectRepository.existsById(projectId)).thenReturn(true);
+        when(projectQnARepository.findByProjectIdOrderByDisplayOrderAscIdAsc(projectId))
+                .thenReturn(List.of(first, second));
+
+        // When
+        var result = projectService.getProjectQnAs(projectId);
+
+        // Then
+        assertThat(result).hasSize(2);
+        assertThat(result.get(0).getQuestion()).isEqualTo("첫 번째 질문");
+        assertThat(result.get(0).getDisplayOrder()).isZero();
+        assertThat(result.get(1).getQuestion()).isEqualTo("두 번째 질문");
+    }
+
+    @Test
+    @DisplayName("프로젝트 Q&A 순서 일괄 변경 성공")
+    void updateProjectQnADisplayOrders_Success() {
+        // Given
+        UUID projectId = testProject.getId();
+        ProjectQnA first = createQnA(projectId, "질문1", "답변1", 0);
+        ProjectQnA second = createQnA(projectId, "질문2", "답변2", 1);
+
+        ProjectQnAOrderUpdateRequest firstUpdate = new ProjectQnAOrderUpdateRequest();
+        firstUpdate.setId(first.getId());
+        firstUpdate.setDisplayOrder(1);
+
+        ProjectQnAOrderUpdateRequest secondUpdate = new ProjectQnAOrderUpdateRequest();
+        secondUpdate.setId(second.getId());
+        secondUpdate.setDisplayOrder(0);
+
+        ProjectQnAOrderBulkUpdateRequest request = new ProjectQnAOrderBulkUpdateRequest();
+        request.setQnaOrders(List.of(firstUpdate, secondUpdate));
+
+        when(projectRepository.existsById(projectId)).thenReturn(true);
+        when(projectQnARepository.findByProjectIdAndIdIn(projectId, List.of(first.getId(), second.getId())))
+                .thenReturn(List.of(first, second));
+        when(projectQnARepository.findByProjectIdOrderByDisplayOrderAscIdAsc(projectId))
+                .thenReturn(List.of(second, first));
+
+        // When
+        var result = projectService.updateProjectQnADisplayOrders(projectId, request);
+
+        // Then
+        assertThat(first.getDisplayOrder()).isEqualTo(1);
+        assertThat(second.getDisplayOrder()).isEqualTo(0);
+        assertThat(result).extracting("id").containsExactly(second.getId(), first.getId());
+        verify(projectQnARepository).saveAll(List.of(first, second));
+    }
+
+    private ProjectQnA createQnA(UUID projectId, String question, String answer, int displayOrder) {
+        Project project = new Project();
+        project.setId(projectId);
+
+        ProjectQnA qna = new ProjectQnA();
+        qna.setId(UUID.randomUUID());
+        qna.setProject(project);
+        qna.setQuestion(question);
+        qna.setAnswer(answer);
+        qna.setDisplayOrder(displayOrder);
+        return qna;
     }
 }
