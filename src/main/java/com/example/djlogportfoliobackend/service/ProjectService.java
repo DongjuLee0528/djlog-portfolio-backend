@@ -1,5 +1,7 @@
 package com.example.djlogportfoliobackend.service;
 
+import com.example.djlogportfoliobackend.dto.ProjectQnAOrderBulkUpdateRequest;
+import com.example.djlogportfoliobackend.dto.ProjectQnAOrderUpdateRequest;
 import com.example.djlogportfoliobackend.dto.ProjectRequest;
 import com.example.djlogportfoliobackend.dto.ProjectResponse;
 import com.example.djlogportfoliobackend.dto.ProjectLinkResponse;
@@ -11,6 +13,8 @@ import com.example.djlogportfoliobackend.entity.ProjectQnA;
 import com.example.djlogportfoliobackend.entity.ProjectSkill;
 import com.example.djlogportfoliobackend.entity.ProjectStatus;
 import com.example.djlogportfoliobackend.exception.ResourceNotFoundException;
+import com.example.djlogportfoliobackend.exception.ValidationException;
+import com.example.djlogportfoliobackend.repository.ProjectQnARepository;
 import com.example.djlogportfoliobackend.repository.ProjectRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,10 +22,13 @@ import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -35,6 +42,7 @@ import java.util.stream.Collectors;
 public class ProjectService {
 
     private final ProjectRepository projectRepository;
+    private final ProjectQnARepository projectQnARepository;
 
     /**
      * 전체 프로젝트 목록 조회
@@ -98,6 +106,20 @@ public class ProjectService {
     public Optional<ProjectResponse> getProjectById(UUID id) {
         return projectRepository.findByIdWithDetails(id)
                 .map(this::convertToResponse);
+    }
+
+    /**
+     * 특정 프로젝트의 Q&A 목록 조회
+     *
+     * @param projectId 프로젝트 ID
+     * @return 표시 순서로 정렬된 Q&A 목록
+     */
+    public List<ProjectQnAResponse> getProjectQnAs(UUID projectId) {
+        validateProjectExists(projectId);
+
+        return projectQnARepository.findByProjectIdOrderByDisplayOrderAscIdAsc(projectId).stream()
+                .map(this::convertToQnAResponse)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -193,6 +215,40 @@ public class ProjectService {
     }
 
     /**
+     * 특정 프로젝트의 Q&A 표시 순서를 일괄 수정
+     *
+     * @param projectId 프로젝트 ID
+     * @param request 순서 변경 요청
+     * @return 변경 후 정렬된 Q&A 목록
+     */
+    @Transactional
+    public List<ProjectQnAResponse> updateProjectQnADisplayOrders(UUID projectId, ProjectQnAOrderBulkUpdateRequest request) {
+        validateProjectExists(projectId);
+
+        List<ProjectQnAOrderUpdateRequest> updates = request.getQnaOrders();
+        validateQnAOrderUpdates(updates);
+
+        List<UUID> requestedIds = updates.stream()
+                .map(ProjectQnAOrderUpdateRequest::getId)
+                .toList();
+
+        List<ProjectQnA> qnas = projectQnARepository.findByProjectIdAndIdIn(projectId, requestedIds);
+        if (qnas.size() != requestedIds.size()) {
+            throw new ValidationException("요청한 Q&A 중 일부가 해당 프로젝트에 존재하지 않습니다.");
+        }
+
+        Map<UUID, ProjectQnA> qnaMap = qnas.stream()
+                .collect(Collectors.toMap(ProjectQnA::getId, Function.identity()));
+
+        updates.forEach(update -> qnaMap.get(update.getId()).setDisplayOrder(update.getDisplayOrder()));
+        projectQnARepository.saveAll(qnas);
+
+        return projectQnARepository.findByProjectIdOrderByDisplayOrderAscIdAsc(projectId).stream()
+                .map(this::convertToQnAResponse)
+                .collect(Collectors.toList());
+    }
+
+    /**
      * 프로젝트 연관 데이터(Skills, Links, QnA) 업데이트
      * 요청 DTO의 데이터를 엔티티 리스트로 변환하여 프로젝트에 추가합니다.
      */
@@ -221,14 +277,17 @@ public class ProjectService {
         }
 
         // QnA
-        if (request.getQnaList() != null) {
-            request.getQnaList().forEach(qnaReq -> {
+        if (request.hasQnARequest()) {
+            List<com.example.djlogportfoliobackend.dto.ProjectQnARequest> qnaRequests = request.getNormalizedQnAList();
+            for (int index = 0; index < qnaRequests.size(); index++) {
+                var qnaReq = qnaRequests.get(index);
                 ProjectQnA qna = new ProjectQnA();
                 qna.setQuestion(qnaReq.getQuestion());
                 qna.setAnswer(qnaReq.getAnswer());
+                qna.setDisplayOrder(resolveQnADisplayOrder(qnaReq.getDisplayOrder(), index));
                 qna.setProject(project);
                 project.getQnaList().add(qna);
-            });
+            }
         }
     }
 
@@ -289,6 +348,8 @@ public class ProjectService {
         // Convert ProjectQnA entities to DTOs
         if (project.getQnaList() != null) {
             response.setQnaList(project.getQnaList().stream()
+                    .sorted(Comparator.comparing(ProjectQnA::getDisplayOrder, Comparator.nullsLast(Integer::compareTo))
+                            .thenComparing(ProjectQnA::getId, Comparator.nullsLast(UUID::compareTo)))
                     .map(this::convertToQnAResponse)
                     .collect(Collectors.toList()));
         }
@@ -324,6 +385,7 @@ public class ProjectService {
         response.setProjectId(qna.getProject().getId());
         response.setQuestion(qna.getQuestion());
         response.setAnswer(qna.getAnswer());
+        response.setDisplayOrder(qna.getDisplayOrder());
         return response;
     }
 
@@ -375,15 +437,38 @@ public class ProjectService {
         }
 
         // QnA 효율적 업데이트
-        if (request.getQnaList() != null) {
+        if (request.hasQnARequest()) {
             project.getQnaList().clear(); // orphanRemoval=true로 자동 삭제됨
-            request.getQnaList().forEach(qnaReq -> {
+            List<com.example.djlogportfoliobackend.dto.ProjectQnARequest> qnaRequests = request.getNormalizedQnAList();
+            for (int index = 0; index < qnaRequests.size(); index++) {
+                var qnaReq = qnaRequests.get(index);
                 ProjectQnA qna = new ProjectQnA();
                 qna.setQuestion(qnaReq.getQuestion());
                 qna.setAnswer(qnaReq.getAnswer());
+                qna.setDisplayOrder(resolveQnADisplayOrder(qnaReq.getDisplayOrder(), index));
                 qna.setProject(project);
                 project.getQnaList().add(qna);
-            });
+            }
+        }
+    }
+
+    private Integer resolveQnADisplayOrder(Integer displayOrder, int fallbackOrder) {
+        return displayOrder != null ? displayOrder : fallbackOrder;
+    }
+
+    private void validateProjectExists(UUID projectId) {
+        if (!projectRepository.existsById(projectId)) {
+            throw new ResourceNotFoundException("프로젝트를 찾을 수 없습니다. ID: " + projectId);
+        }
+    }
+
+    private void validateQnAOrderUpdates(List<ProjectQnAOrderUpdateRequest> updates) {
+        List<UUID> ids = updates.stream()
+                .map(ProjectQnAOrderUpdateRequest::getId)
+                .toList();
+
+        if (new LinkedHashSet<>(ids).size() != ids.size()) {
+            throw new ValidationException("중복된 Q&A ID가 포함되어 있습니다.");
         }
     }
 }
