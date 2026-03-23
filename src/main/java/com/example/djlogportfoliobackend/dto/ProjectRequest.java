@@ -1,10 +1,12 @@
 package com.example.djlogportfoliobackend.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.example.djlogportfoliobackend.entity.ProjectStatus;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -63,6 +65,7 @@ public class ProjectRequest {
      * 프로젝트 Q&A 목록
      */
     @Valid
+    @JsonAlias("qna")
     private List<ProjectQnARequest> qnaList;
 
     /**
@@ -81,4 +84,12 @@ public class ProjectRequest {
      * 낮은 숫자일수록 우선 순위가 높음
      */
     private Integer order;
+
+    public boolean hasQnARequest() {
+        return qnaList != null;
+    }
+
+    public List<ProjectQnARequest> getNormalizedQnAList() {
+        return qnaList != null ? qnaList : Collections.emptyList();
+    }
 }
