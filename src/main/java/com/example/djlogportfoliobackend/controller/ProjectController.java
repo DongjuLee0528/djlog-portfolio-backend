@@ -1,16 +1,24 @@
 package com.example.djlogportfoliobackend.controller;
 
+import com.example.djlogportfoliobackend.dto.ProjectQnAOrderBulkUpdateRequest;
+import com.example.djlogportfoliobackend.dto.ProjectQnAResponse;
 import com.example.djlogportfoliobackend.dto.ProjectRequest;
 import com.example.djlogportfoliobackend.dto.ProjectResponse;
+import com.example.djlogportfoliobackend.service.FileUploadService;
 import com.example.djlogportfoliobackend.service.ProjectService;
 import com.example.djlogportfoliobackend.service.SecurityService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -24,6 +32,7 @@ public class ProjectController {
 
     private final ProjectService projectService;
     private final SecurityService securityService;
+    private final FileUploadService fileUploadService;
 
     /**
      * 프로젝트 목록을 조회합니다.
@@ -35,7 +44,7 @@ public class ProjectController {
      */
     @GetMapping
     public ResponseEntity<List<ProjectResponse>> getAllProjects(
-            @RequestParam(defaultValue = "published") String status,
+            @RequestParam(required = false) String status,
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String tag) {
 
@@ -60,6 +69,25 @@ public class ProjectController {
     }
 
     /**
+     * 프로젝트 이미지 파일 업로드 API
+     *
+     * @param file 업로드할 이미지 파일
+     * @return 프로젝트 image 필드에 바로 저장 가능한 경로
+     * @throws IOException 파일 저장 중 오류 발생 시
+     */
+    @PostMapping(value = "/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Map<String, String>> uploadProjectImage(@RequestParam("file") MultipartFile file) throws IOException {
+        String imagePath = fileUploadService.uploadFile(file);
+
+        Map<String, String> response = new HashMap<>();
+        response.put("image", imagePath);
+        response.put("url", imagePath);
+        response.put("path", imagePath);
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
      * 특정 프로젝트를 ID로 조회합니다.
      *
      * @param id 프로젝트 ID
@@ -70,6 +98,17 @@ public class ProjectController {
         return projectService.getProjectById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    /**
+     * 특정 프로젝트의 Q&A 목록을 표시 순서대로 조회합니다.
+     *
+     * @param projectId 프로젝트 ID
+     * @return 정렬된 Q&A 목록
+     */
+    @GetMapping("/{projectId}/qna")
+    public ResponseEntity<List<ProjectQnAResponse>> getProjectQnAs(@PathVariable UUID projectId) {
+        return ResponseEntity.ok(projectService.getProjectQnAs(projectId));
     }
 
     /**
@@ -95,6 +134,20 @@ public class ProjectController {
     public ResponseEntity<ProjectResponse> updateProject(@PathVariable UUID id, @Valid @RequestBody ProjectRequest request) {
         ProjectResponse updatedProject = projectService.updateProject(id, request);
         return ResponseEntity.ok(updatedProject);
+    }
+
+    /**
+     * 특정 프로젝트의 Q&A 표시 순서를 일괄 수정합니다.
+     *
+     * @param projectId 프로젝트 ID
+     * @param request 순서 변경 요청
+     * @return 정렬된 Q&A 목록
+     */
+    @PutMapping("/{projectId}/qna/display-order")
+    public ResponseEntity<List<ProjectQnAResponse>> updateProjectQnADisplayOrders(
+            @PathVariable UUID projectId,
+            @Valid @RequestBody ProjectQnAOrderBulkUpdateRequest request) {
+        return ResponseEntity.ok(projectService.updateProjectQnADisplayOrders(projectId, request));
     }
 
     /**
