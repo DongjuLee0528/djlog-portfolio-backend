@@ -105,6 +105,7 @@ public class Project {
      * 프로젝트 관련 Q&A 목록
      */
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("displayOrder ASC, id ASC")
     @BatchSize(size = 10)
     private List<ProjectQnA> qnaList = new ArrayList<>();
 
